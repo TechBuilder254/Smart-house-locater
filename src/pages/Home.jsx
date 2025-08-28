@@ -3,6 +3,7 @@ import AddHouse from '../components/AddHouse'
 import HousesList from '../components/HousesList'
 import LocationModal from '../components/LocationModal'
 import SuccessModal from '../components/SuccessModal'
+import DebugInfo from '../components/DebugInfo'
 import apiService from '../services/api'
 
 const Home = () => {
@@ -113,6 +114,9 @@ const Home = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Debug Info - Temporary for troubleshooting */}
+      <DebugInfo />
+      
       <div className="grid lg:grid-cols-2 gap-8">
         <AddHouse 
           onAddHouse={addHouse}
