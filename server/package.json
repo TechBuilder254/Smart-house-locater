@@ -8,6 +8,8 @@
     "dev": "nodemon server.js",
     "supabase": "node supabase-server.js",
     "supabase:dev": "nodemon supabase-server.js",
+    "prod": "NODE_ENV=production node production-server.js",
+    "prod:dev": "NODE_ENV=production nodemon production-server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -20,6 +22,7 @@
   "license": "MIT",
   "dependencies": {
     "@supabase/supabase-js": "^2.56.0",
+    "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
