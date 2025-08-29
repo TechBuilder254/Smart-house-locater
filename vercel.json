@@ -7,10 +7,6 @@
       "config": {
         "distDir": "dist"
       }
-    },
-    {
-      "src": "api/**/*.js",
-      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -24,6 +20,6 @@
     }
   ],
   "env": {
-    "REACT_APP_API_URL": "/api"
+    "VITE_API_URL": "/api"
   }
 }
