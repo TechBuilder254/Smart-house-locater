@@ -1,57 +1,39 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import Header from './components/Header'
+import Home from './pages/Home'
+import SavedHouses from './pages/SavedHouses'
+import AddHousePage from './pages/AddHousePage'
+import TermsOfService from './pages/TermsOfService'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import Footer from './components/Footer'
 
 function App() {
-  console.log('🔍 Debug: Simple App component rendering');
-  
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#1e40af', 
-      color: 'white',
-      padding: '20px',
-      fontFamily: 'Arial, sans-serif'
-    }}>
-      <h1 style={{ fontSize: '2rem', textAlign: 'center', marginBottom: '20px' }}>
-        🚀 Simple React App Test
-      </h1>
-      
-      <div style={{ 
-        maxWidth: '600px', 
-        margin: '0 auto', 
-        backgroundColor: 'white', 
-        color: 'black',
-        padding: '20px',
-        borderRadius: '8px'
-      }}>
-        <h2>✅ If you see this, React is working!</h2>
-        <p>This is the simplest possible React app without any external dependencies.</p>
+    <Router>
+      <div className="min-h-screen bg-gradient-to-br from-primary-600 to-primary-800 flex flex-col">
+        <Header isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
         
-        <div style={{ marginTop: '20px' }}>
-          <h3>Debug Information:</h3>
-          <ul>
-            <li>React Version: {React.version}</li>
-            <li>Environment: {import.meta.env.MODE}</li>
-            <li>Node Environment: {import.meta.env.NODE_ENV}</li>
-            <li>Build Time: {new Date().toLocaleString()}</li>
-          </ul>
-        </div>
+        {/* Blur overlay when menu is open - positioned below header */}
+        {isMenuOpen && (
+          <div className="fixed top-0 left-0 right-0 bottom-0 bg-black/30 backdrop-blur-sm z-30 pt-32" onClick={() => setIsMenuOpen(false)}></div>
+        )}
         
-        <button 
-          onClick={() => alert('Button click works!')}
-          style={{
-            backgroundColor: '#1e40af',
-            color: 'white',
-            padding: '10px 20px',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            marginTop: '20px'
-          }}
-        >
-          Test Button Click
-        </button>
+        <main className={`flex-grow transition-all duration-300 ${isMenuOpen ? 'blur-sm' : ''}`}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/saved-houses" element={<SavedHouses />} />
+            <Route path="/add-house" element={<AddHousePage />} />
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+          </Routes>
+        </main>
+
+        <Footer />
       </div>
-    </div>
+    </Router>
   )
 }
 
