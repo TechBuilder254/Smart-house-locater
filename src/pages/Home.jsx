@@ -47,6 +47,7 @@ const Home = ({ user }) => {
   // Filter houses based on search term
   const filteredHouses = houses.filter(house =>
     house.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (house.agent_name && house.agent_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (house.caretaker_name && house.caretaker_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (house.notes && house.notes.toLowerCase().includes(searchTerm.toLowerCase()))
   )
@@ -172,9 +173,9 @@ const Home = ({ user }) => {
                <Users className="w-8 h-8 text-green-400" />
              </div>
              <h3 className="text-2xl font-bold text-white mb-1">
-               {new Set(houses.filter(h => h.caretaker_name).map(h => h.caretaker_name)).size}
+               {new Set(houses.filter(h => h.agent_name).map(h => h.agent_name)).size}
              </h3>
-             <p className="text-white/70">Caretakers</p>
+             <p className="text-white/70">Agents</p>
            </div>
           
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
@@ -227,12 +228,18 @@ const Home = ({ user }) => {
             <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
               <h4 className="font-semibold text-gray-800 mb-2">{selectedHouse.name}</h4>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                                 {selectedHouse.caretaker_name && (
-                   <div>
-                     <p className="text-gray-600">Caretaker</p>
-                     <p className="font-medium">{selectedHouse.caretaker_name}</p>
-                   </div>
-                 )}
+                {selectedHouse.agent_name && (
+                  <div>
+                    <p className="text-gray-600">Agent</p>
+                    <p className="font-medium">{selectedHouse.agent_name}</p>
+                  </div>
+                )}
+                {selectedHouse.caretaker_name && (
+                  <div>
+                    <p className="text-gray-600">Caretaker</p>
+                    <p className="font-medium">{selectedHouse.caretaker_name}</p>
+                  </div>
+                )}
                 <div>
                   <p className="text-gray-600">Coordinates</p>
                   <p className="font-mono text-xs">{selectedHouse.latitude.toFixed(6)}, {selectedHouse.longitude.toFixed(6)}</p>

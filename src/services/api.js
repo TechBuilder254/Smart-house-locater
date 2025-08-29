@@ -38,6 +38,7 @@ const apiService = {
           notes: houseData.notes,
           caretaker_name: houseData.caretaker_name,
           caretaker_phone: houseData.caretaker_phone
+          // agent_name and user_id will be automatically set by the database trigger
         }])
         .select()
         .single()
