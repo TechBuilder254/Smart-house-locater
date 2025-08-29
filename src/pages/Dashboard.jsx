@@ -1,36 +1,28 @@
 import React, { useState, useEffect } from 'react'
-import { MapPin, Home, Users, Plus, Search, Calendar, User, LogOut, Settings } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
-import { supabase } from '../services/supabase'
+import { Home, MapPin, Plus, TrendingUp, Users, Calendar, Search, Filter, Eye, Edit, Trash2, Clock, Map } from 'lucide-react'
+import Header from '../components/Header'
 import SimpleMap from '../components/SimpleMap'
+import apiService from '../services/api'
 
 const Dashboard = ({ user }) => {
   const [houses, setHouses] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [searchTerm, setSearchTerm] = useState('')
   const [selectedHouse, setSelectedHouse] = useState(null)
-  const [mapCenter, setMapCenter] = useState({ lat: -1.2921, lng: 36.8219 })
-  const navigate = useNavigate()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
 
-  useEffect(() => {
-    loadHouses()
-  }, [])
-
+  // Load houses from Supabase API
   const loadHouses = async () => {
+    setIsLoading(true)
+    setError(null)
+    
     try {
-      const { data, error } = await supabase
-        .from('houses')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        throw error
-      }
-
-      setHouses(data || [])
-      if (data && data.length > 0) {
-        setMapCenter({ lat: data[0].latitude, lng: data[0].longitude })
+      const response = await apiService.getHouses()
+      if (response.success) {
+        setHouses(response.data)
+      } else {
+        throw new Error(response.message || 'Failed to load houses')
       }
     } catch (error) {
       console.error('Error loading houses:', error)
@@ -40,12 +32,23 @@ const Dashboard = ({ user }) => {
     }
   }
 
-  const handleSignOut = async () => {
+  useEffect(() => {
+    if (user) {
+      loadHouses()
+    }
+  }, [user])
+
+  const deleteHouse = async (houseId) => {
     try {
-      await supabase.auth.signOut()
-      navigate('/')
+      const response = await apiService.deleteHouse(houseId)
+      if (response.success) {
+        setHouses(prev => prev.filter(house => house.id !== houseId))
+      } else {
+        throw new Error(response.message || 'Failed to delete house')
+      }
     } catch (error) {
-      console.error('Error signing out:', error)
+      console.error('Error deleting house:', error)
+      alert(`Error deleting house: ${error.message}`)
     }
   }
 
@@ -55,244 +58,305 @@ const Dashboard = ({ user }) => {
     (house.caretaker_name && house.caretaker_name.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
-  const handleHouseClick = (house) => {
-    setSelectedHouse(house)
-    setMapCenter({ lat: house.latitude, lng: house.longitude })
-  }
+  const recentHouses = filteredHouses.slice(0, 5)
+  const totalProperties = houses.length
+  const propertiesWithCaretakers = houses.filter(h => h.caretaker_name).length
+  const activeAgents = new Set(houses.filter(h => h.agent_name).map(h => h.agent_name)).size
+  const latestAddition = houses.length > 0 ? houses[0] : null
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
+      year: 'numeric'
     })
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-gray-50">
+        <Header 
+          isMenuOpen={isMenuOpen}
+          setIsMenuOpen={setIsMenuOpen}
+          user={user}
+        />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center min-h-96">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              </div>
+              <h3 className="text-xl font-bold text-gray-700 mb-2">Loading Dashboard...</h3>
+              <p className="text-gray-500">Fetching your property data</p>
+            </div>
           </div>
-          <h3 className="text-xl font-bold text-gray-700 mb-2">Loading Dashboard...</h3>
-          <p className="text-gray-500">Fetching your property data</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header 
+          isMenuOpen={isMenuOpen}
+          setIsMenuOpen={setIsMenuOpen}
+          user={user}
+        />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center min-h-96">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-700 mb-2">Failed to load dashboard</h3>
+              <p className="text-gray-500 mb-4">{error}</p>
+              <button
+                onClick={loadHouses}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg blur-lg opacity-30"></div>
-                <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
-                  <Home className="w-6 h-6 text-white" />
-                </div>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Smart House Locator</h1>
-                <p className="text-sm text-gray-600">Dashboard</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">
-                    {user?.user_metadata?.name || user?.email}
-                  </p>
-                  <p className="text-xs text-gray-500">Agent</p>
-                </div>
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                  <User className="w-4 h-4 text-white" />
-                </div>
-              </div>
-              <button
-                onClick={handleSignOut}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Sign Out"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-50">
+      <Header 
+        isMenuOpen={isMenuOpen}
+        setIsMenuOpen={setIsMenuOpen}
+        user={user}
+      />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Page Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600 mt-2">Welcome back! Here's an overview of your properties.</p>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-            <div className="flex items-center gap-4">
-              <div className="bg-blue-100 p-3 rounded-xl">
+        {/* Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Home className="w-6 h-6 text-blue-600" />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{houses.length}</p>
-                <p className="text-sm text-gray-600">Total Properties</p>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Total Properties</p>
+                <p className="text-2xl font-bold text-gray-900">{totalProperties}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-            <div className="flex items-center gap-4">
-              <div className="bg-purple-100 p-3 rounded-xl">
-                <Users className="w-6 h-6 text-purple-600" />
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <Users className="w-6 h-6 text-green-600" />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {new Set(houses.filter(h => h.agent_name).map(h => h.agent_name)).size}
-                </p>
-                <p className="text-sm text-gray-600">Active Agents</p>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">With Caretakers</p>
+                <p className="text-2xl font-bold text-gray-900">{propertiesWithCaretakers}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-            <div className="flex items-center gap-4">
-              <div className="bg-green-100 p-3 rounded-xl">
-                <MapPin className="w-6 h-6 text-green-600" />
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-purple-600" />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {houses.filter(h => h.caretaker_name).length}
-                </p>
-                <p className="text-sm text-gray-600">With Caretakers</p>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Active Agents</p>
+                <p className="text-2xl font-bold text-gray-900">{activeAgents}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-            <div className="flex items-center gap-4">
-              <div className="bg-orange-100 p-3 rounded-xl">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
                 <Calendar className="w-6 h-6 text-orange-600" />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {houses.length > 0 ? formatDate(houses[0].created_at) : 'N/A'}
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Latest Addition</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {latestAddition ? formatDate(latestAddition.created_at) : 'None'}
                 </p>
-                <p className="text-sm text-gray-600">Latest Addition</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Search and Actions */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search properties by name, agent, or caretaker..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-            />
+        {/* Quick Actions */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a
+              href="/add-house"
+              className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
+            >
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                <Plus className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Add Property</p>
+                <p className="text-sm text-gray-600">Record new property details</p>
+              </div>
+            </a>
+
+            <a
+              href="/saved-houses"
+              className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
+            >
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                <Eye className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">View All Properties</p>
+                <p className="text-sm text-gray-600">Browse your property collection</p>
+              </div>
+            </a>
+
+            <button
+              onClick={() => setSelectedHouse(null)}
+              className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors text-left"
+            >
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                <Map className="w-5 h-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Property Map</p>
+                <p className="text-sm text-gray-600">View network overview</p>
+              </div>
+            </button>
           </div>
-          <Link
-            to="/add-house"
-            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center gap-2 justify-center"
-          >
-            <Plus className="w-5 h-5" />
-            Add Property
-          </Link>
         </div>
 
-        {/* Map and Properties Grid */}
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Map Section */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Property Network</h2>
-            <div className="h-96 rounded-xl overflow-hidden">
-              <SimpleMap
-                houses={houses}
-                selectedHouse={selectedHouse}
-                onHouseClick={handleHouseClick}
-                center={mapCenter}
-              />
-            </div>
-          </div>
-
-          {/* Properties List */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Recent Properties</h2>
-              <Link
-                to="/saved-houses"
-                className="text-blue-600 hover:text-blue-700 font-medium text-sm"
-              >
-                View All
-              </Link>
-            </div>
-
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {filteredHouses.length === 0 ? (
-                <div className="text-center py-8">
-                  <Home className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-600 mb-2">
-                    {searchTerm ? 'No properties found' : 'No properties yet'}
-                  </h3>
-                  <p className="text-gray-500 mb-4">
-                    {searchTerm ? 'Try adjusting your search terms' : 'Add your first property to get started'}
-                  </p>
-                  {!searchTerm && (
-                    <Link
-                      to="/add-house"
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all duration-200"
-                    >
-                      Add First Property
-                    </Link>
-                  )}
-                </div>
-              ) : (
-                filteredHouses.slice(0, 5).map((house) => (
-                  <div
-                    key={house.id}
-                    className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
-                      selectedHouse?.id === house.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
-                    }`}
-                    onClick={() => handleHouseClick(house)}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 mb-1">{house.name}</h3>
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                          {house.agent_name && (
-                            <span className="flex items-center gap-1">
-                              <User className="w-4 h-4" />
-                              {house.agent_name}
-                            </span>
-                          )}
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            {formatDate(house.created_at)}
-                          </span>
-                        </div>
-                        {house.notes && (
-                          <p className="text-sm text-gray-500 mt-2 line-clamp-2">{house.notes}</p>
-                        )}
-                      </div>
-                      <div className="text-right text-sm text-gray-500">
-                        <div>{house.latitude.toFixed(4)}</div>
-                        <div>{house.longitude.toFixed(4)}</div>
-                      </div>
-                    </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Property Map */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">Property Network</h2>
+                <div className="flex items-center space-x-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search properties..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    />
                   </div>
-                ))
+                </div>
+              </div>
+              
+              {houses.length > 0 ? (
+                <SimpleMap
+                  houses={filteredHouses}
+                  selectedHouse={selectedHouse}
+                  onHouseClick={setSelectedHouse}
+                />
+              ) : (
+                <div className="h-96 bg-gray-50 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <Home className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No properties yet</h3>
+                    <p className="text-gray-500 mb-4">Add your first property to see it on the map</p>
+                    <a
+                      href="/add-house"
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Add Property
+                    </a>
+                  </div>
+                </div>
               )}
             </div>
           </div>
+
+          {/* Recent Properties & Activity */}
+          <div className="space-y-6">
+            {/* Recent Properties */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Properties</h2>
+              <div className="space-y-3">
+                {recentHouses.length > 0 ? (
+                  recentHouses.map((house) => (
+                    <div key={house.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">{house.name}</p>
+                        <p className="text-sm text-gray-600">
+                          {house.agent_name && `Agent: ${house.agent_name}`}
+                          {house.caretaker_name && ` • Caretaker: ${house.caretaker_name}`}
+                        </p>
+                        <p className="text-xs text-gray-500">{formatDate(house.created_at)}</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => setSelectedHouse(house)}
+                          className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                          title="View on map"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => deleteHouse(house.id)}
+                          className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center py-4">No properties found</p>
+                )}
+              </div>
+              {houses.length > 5 && (
+                <div className="mt-4 text-center">
+                  <a
+                    href="/saved-houses"
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
+                    View all properties →
+                  </a>
+                </div>
+              )}
+            </div>
+
+            {/* Activity Feed */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h2>
+              <div className="space-y-3">
+                {houses.slice(0, 3).map((house) => (
+                  <div key={house.id} className="flex items-start space-x-3">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-900">
+                        <span className="font-medium">Property added:</span> {house.name}
+                      </p>
+                      <p className="text-xs text-gray-500 flex items-center mt-1">
+                        <Clock className="w-3 h-3 mr-1" />
+                        {formatDate(house.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   )
 }

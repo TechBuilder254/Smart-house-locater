@@ -1,5 +1,5 @@
 import React from 'react'
-import { Home, MapPin, Navigation, Menu, X, Plus, List, User, LogOut, ArrowLeft } from 'lucide-react'
+import { Home, MapPin, Navigation, Menu, X, Plus, List, User, LogOut, Settings, BarChart3, Search } from 'lucide-react'
 import { supabase } from '../services/supabase'
 import { useNavigate, useLocation } from 'react-router-dom'
 
@@ -15,188 +15,181 @@ const Header = ({ isMenuOpen, setIsMenuOpen, user, onAuthClick, showBackButton =
     navigate(-1)
   }
 
+  const navItems = [
+    { path: '/dashboard', icon: Home, label: 'Dashboard', active: location.pathname === '/dashboard' },
+    { path: '/saved-houses', icon: List, label: 'Properties', active: location.pathname === '/saved-houses' },
+    { path: '/add-house', icon: Plus, label: 'Add Property', active: location.pathname === '/add-house' },
+  ]
+
   return (
-    <div className="relative overflow-hidden">
-      {/* Header with curved corners and better colors */}
-      <header className="py-3 md:py-4 relative">
-        {/* Background decoration */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent"></div>
-        <div className="absolute top-2 left-2 md:top-4 md:left-4 w-8 h-8 md:w-12 md:h-12 bg-purple-500/20 rounded-full blur-xl"></div>
-        <div className="absolute top-4 right-2 md:top-6 md:right-4 w-10 h-10 md:w-16 md:h-16 bg-blue-500/20 rounded-full blur-xl"></div>
-        
-        <div className="relative z-40">
-          {/* Glass morphism card with curved corners */}
-          <div className="relative mx-3 md:mx-6">
-            {/* Card background with enhanced glass effect */}
-            <div className="relative bg-gradient-to-r from-purple-600/90 via-blue-600/90 to-indigo-600/90 backdrop-blur-xl border border-white/30 rounded-3xl md:rounded-3xl shadow-2xl overflow-hidden">
-              {/* Enhanced gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-indigo-500/20"></div>
-              <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-transparent"></div>
-              
-              {/* Content */}
-              <div className="relative px-6 py-4 md:px-8 md:py-6">
-                {/* Top row with back button and menu */}
-                <div className="flex items-center justify-between mb-4">
-                  {/* Back button */}
-                  {showBackButton && (
-                    <button
-                      onClick={handleBack}
-                      className="flex items-center gap-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-2 hover:bg-white/30 transition-all duration-200 hover:scale-105"
-                    >
-                      <ArrowLeft className="w-4 h-4 text-white" />
-                      <span className="text-white text-sm font-medium">Back</span>
-                    </button>
-                  )}
-                  
-                  {/* Menu Button - Always visible */}
-                  <button
-                    onClick={toggleMenu}
-                    className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-2 hover:bg-white/30 transition-all duration-200 hover:scale-105"
-                  >
-                    {isMenuOpen ? (
-                      <X className="w-5 h-5 text-white" />
-                    ) : (
-                      <Menu className="w-5 h-5 text-white" />
-                    )}
-                  </button>
+    <>
+      {/* Top Navigation Bar */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo and Brand */}
+            <div className="flex items-center">
+              <div className="flex-shrink-0 flex items-center">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
+                  <Home className="w-5 h-5 text-white" />
                 </div>
+                <h1 className="text-xl font-bold text-gray-900">Smart House Locator</h1>
+              </div>
+            </div>
 
-                {/* Title Section */}
-                <div className="flex items-center justify-center gap-3 md:gap-4 mb-3 md:mb-4">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl blur-lg opacity-60"></div>
-                    <div className="relative bg-gradient-to-r from-purple-600 to-blue-600 p-3 rounded-2xl shadow-xl border border-white/40">
-                      <Home className="w-6 h-6 md:w-7 md:h-7 text-white" />
-                    </div>
-                  </div>
-                  <h1 className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg">
-                    {title}
-                  </h1>
-                </div>
-                
-                {/* Tagline */}
-                <div className="text-center mb-4 md:mb-6">
-                  <p className="text-sm md:text-lg text-blue-200 font-light">
-                    Navigate to properties with ease and precision
-                  </p>
-                </div>
-                
-                {/* Feature highlights */}
-                <div className="flex justify-center items-center gap-4 md:gap-8">
-                  <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2 text-blue-200">
-                    <MapPin className="w-4 h-4 md:w-5 md:h-5" />
-                    <span className="text-xs md:text-sm font-medium">GPS</span>
-                  </div>
-                  <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2 text-blue-200">
-                    <Navigation className="w-4 h-4 md:w-5 md:h-5" />
-                    <span className="text-xs md:text-sm font-medium">Maps</span>
-                  </div>
-                  <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2 text-blue-200">
-                    <Home className="w-4 h-4 md:w-5 md:h-5" />
-                    <span className="text-xs md:text-sm font-medium">Properties</span>
-                  </div>
-                </div>
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex space-x-8">
+              {navItems.map((item) => (
+                <a
+                  key={item.path}
+                  href={item.path}
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    item.active
+                      ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-600'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  <item.icon className="w-4 h-4 mr-2" />
+                  {item.label}
+                </a>
+              ))}
+            </nav>
 
-                {/* Desktop Navigation */}
-                <nav className="hidden md:flex items-center justify-center gap-4 mt-4">
-                  <a href="/dashboard" className="flex items-center gap-2 text-white/80 hover:text-white transition-colors duration-200 hover:scale-105">
-                    <Home className="w-4 h-4" />
-                    <span className="text-sm font-medium">Dashboard</span>
-                  </a>
-                  <a href="/saved-houses" className="flex items-center gap-2 text-white/80 hover:text-white transition-colors duration-200 hover:scale-105">
-                    <List className="w-4 h-4" />
-                    <span className="text-sm font-medium">Saved Houses</span>
-                  </a>
-                  <a href="/add-house" className="flex items-center gap-2 bg-white/20 border border-white/30 rounded-xl px-4 py-2 text-white hover:bg-white/30 transition-all duration-200 hover:scale-105">
-                    <Plus className="w-4 h-4" />
-                    <span className="text-sm font-medium">Add Property</span>
-                  </a>
-                  
-                  {/* Auth Section */}
-                  {user ? (
-                    <div className="flex items-center gap-3 ml-4 pl-4 border-l border-white/30">
-                      <div className="text-white text-sm">
-                        <span className="font-medium">{user.user_metadata?.name || user.email}</span>
-                      </div>
-                      <button
-                        onClick={() => {
-                          supabase.auth.signOut()
-                          window.location.reload()
-                        }}
-                        className="p-2 hover:bg-white/20 rounded-xl transition-colors"
-                        title="Sign Out"
-                      >
-                        <LogOut className="w-4 h-4 text-white" />
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={onAuthClick}
-                      className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl transition-colors text-white ml-4"
-                    >
-                      <User className="w-4 h-4" />
-                      <span className="text-sm font-medium">Sign In</span>
-                    </button>
-                  )}
-                </nav>
-
-                {/* Mobile Menu Dropdown */}
-                <div className={`md:hidden mt-4 transition-all duration-300 ease-in-out overflow-hidden ${
-                  isMenuOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'
-                }`}>
-                  <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 space-y-3">
-                    <a href="/dashboard" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 text-white text-base hover:text-blue-200 transition-colors duration-200 hover:scale-105 p-3 rounded-xl hover:bg-white/10">
-                      <Home className="w-5 h-5" />
-                      <span className="font-medium">Dashboard</span>
-                    </a>
-                    <a href="/saved-houses" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 text-white text-base hover:text-blue-200 transition-colors duration-200 hover:scale-105 p-3 rounded-xl hover:bg-white/10">
-                      <List className="w-5 h-5" />
-                      <span className="font-medium">Saved Houses</span>
-                    </a>
-                    <a href="/add-house" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 bg-white/20 border border-white/30 rounded-xl px-4 py-3 text-white hover:bg-white/30 transition-all duration-200 hover:scale-105">
-                      <Plus className="w-5 h-5" />
-                      <span className="font-medium">Add Property</span>
-                    </a>
-                    
-                    {/* Mobile Auth Section */}
-                    {user ? (
-                      <>
-                        <div className="border-t border-white/20 pt-3 mt-3">
-                          <div className="flex items-center justify-between text-white text-sm mb-2">
-                            <span className="font-medium">{user.user_metadata?.name || user.email}</span>
-                          </div>
-                          <button
-                            onClick={() => {
-                              supabase.auth.signOut()
-                              window.location.reload()
-                            }}
-                            className="flex items-center gap-3 text-white text-base hover:text-red-200 transition-colors duration-200 hover:scale-105 p-3 rounded-xl hover:bg-white/10 w-full"
-                          >
-                            <LogOut className="w-5 h-5" />
-                            <span className="font-medium">Sign Out</span>
-                          </button>
-                        </div>
-                      </>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          onAuthClick()
-                          setIsMenuOpen(false)
-                        }}
-                        className="flex items-center gap-3 text-white text-base hover:text-blue-200 transition-colors duration-200 hover:scale-105 p-3 rounded-xl hover:bg-white/10 w-full"
-                      >
-                        <User className="w-5 h-5" />
-                        <span className="font-medium">Sign In</span>
-                      </button>
-                    )}
-                  </div>
+            {/* Right side - Search, User, Menu */}
+            <div className="flex items-center space-x-4">
+              {/* Search */}
+              <div className="hidden md:flex items-center">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search properties..."
+                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
                 </div>
               </div>
+
+              {/* User Menu */}
+              {user ? (
+                <div className="flex items-center space-x-3">
+                  <div className="hidden md:block">
+                    <p className="text-sm font-medium text-gray-900">{user.user_metadata?.name || user.email}</p>
+                    <p className="text-xs text-gray-500">Property Manager</p>
+                  </div>
+                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                  <button
+                    onClick={() => {
+                      supabase.auth.signOut()
+                      window.location.reload()
+                    }}
+                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Sign Out"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={onAuthClick}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Sign In
+                </button>
+              )}
+
+              {/* Mobile menu button */}
+              <button
+                onClick={toggleMenu}
+                className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+              >
+                {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
             </div>
           </div>
         </div>
       </header>
-    </div>
+
+      {/* Mobile Navigation Menu */}
+      {isMenuOpen && (
+        <div className="md:hidden bg-white border-b border-gray-200">
+          <div className="px-2 pt-2 pb-3 space-y-1">
+            {navItems.map((item) => (
+              <a
+                key={item.path}
+                href={item.path}
+                onClick={() => setIsMenuOpen(false)}
+                className={`flex items-center px-3 py-2 rounded-md text-base font-medium ${
+                  item.active
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                <item.icon className="w-5 h-5 mr-3" />
+                {item.label}
+              </a>
+            ))}
+            
+            {/* Mobile Search */}
+            <div className="px-3 py-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search properties..."
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Mobile User Info */}
+            {user && (
+              <div className="px-3 py-2 border-t border-gray-200">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center mr-3">
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">{user.user_metadata?.name || user.email}</p>
+                    <p className="text-xs text-gray-500">Property Manager</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      supabase.auth.signOut()
+                      window.location.reload()
+                    }}
+                    className="p-2 text-gray-400 hover:text-gray-600"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Page Header (if needed) */}
+      {showBackButton && (
+        <div className="bg-gray-50 border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center">
+              <button
+                onClick={handleBack}
+                className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Back
+              </button>
+              <h2 className="ml-4 text-lg font-medium text-gray-900">{title}</h2>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
