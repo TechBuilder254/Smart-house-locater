@@ -1,34 +1,33 @@
 import React, { useState, useEffect } from 'react'
-import AddHouse from '../components/AddHouse'
-import HousesList from '../components/HousesList'
-import LocationModal from '../components/LocationModal'
-import SuccessModal from '../components/SuccessModal'
+import { MapPin, Home, Users, Network, Plus, Search, Filter } from 'lucide-react'
 import TestConnection from '../components/TestConnection'
 import apiService from '../services/api'
 
 const Home = () => {
   const [houses, setHouses] = useState([])
-  const [showLocationModal, setShowLocationModal] = useState(false)
-  const [showSuccessModal, setShowSuccessModal] = useState(false)
-  const [successMessage, setSuccessMessage] = useState('')
-  const [searchTerm, setSearchTerm] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedHouse, setSelectedHouse] = useState(null)
+  const [mapCenter, setMapCenter] = useState({ lat: -1.2921, lng: 36.8219 }) // Nairobi center
 
-  // Load houses from MongoDB API on component mount
-  useEffect(() => {
-    loadHouses()
-  }, [])
-
+  // Load houses from API
   const loadHouses = async () => {
     setIsLoading(true)
     setError(null)
     
     try {
       const response = await apiService.getHouses()
-      
       if (response.success) {
         setHouses(response.data)
+        
+        // Set map center to first house if available
+        if (response.data.length > 0) {
+          setMapCenter({
+            lat: response.data[0].latitude,
+            lng: response.data[0].longitude
+          })
+        }
       } else {
         throw new Error(response.message || 'Failed to load houses')
       }
@@ -40,22 +39,9 @@ const Home = () => {
     }
   }
 
-  const addHouse = (houseData) => {
-    // Add the new house to the beginning of the list
-    setHouses(prev => [houseData, ...prev])
-    setSuccessMessage(`House "${houseData.name}" has been saved to cloud database!`)
-    setShowSuccessModal(true)
-  }
-
-  const deleteHouse = (houseId) => {
-    // This is now handled in the HousesList component via API
-    // We just need to update the local state
-    setHouses(prev => prev.filter(house => house.id !== houseId))
-  }
-
-  const updateHouses = (updatedHouses) => {
-    setHouses(updatedHouses)
-  }
+  useEffect(() => {
+    loadHouses()
+  }, [])
 
   // Filter houses based on search term
   const filteredHouses = houses.filter(house =>
@@ -63,6 +49,22 @@ const Home = () => {
     house.agent_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (house.notes && house.notes.toLowerCase().includes(searchTerm.toLowerCase()))
   )
+
+  const handleHouseClick = (house) => {
+    setSelectedHouse(house)
+    setMapCenter({ lat: house.latitude, lng: house.longitude })
+  }
+
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371 // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180
+    const dLon = (lon2 - lon1) * Math.PI / 180
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+    return R * c
+  }
 
   // Show loading state
   if (isLoading) {
@@ -76,7 +78,7 @@ const Home = () => {
                 <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               </div>
             </div>
-            <h3 className="text-xl font-bold text-gray-700 mb-2">Loading your houses...</h3>
+            <h3 className="text-xl font-bold text-gray-700 mb-2">Loading your house network...</h3>
             <p className="text-gray-500">Fetching data from cloud database</p>
           </div>
         </div>
@@ -118,38 +120,242 @@ const Home = () => {
       <div className="mb-6">
         <TestConnection />
       </div>
-      
-      <div className="grid lg:grid-cols-2 gap-8">
-        <AddHouse 
-          onAddHouse={addHouse}
-          onShowLocationModal={() => setShowLocationModal(true)}
-        />
+
+      {/* Header Section */}
+      <div className="text-center mb-8">
+        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          🏠 Smart House Network
+        </h1>
+        <p className="text-xl text-white/80 mb-6">
+          Visualize your property network and discover new opportunities
+        </p>
         
-        <HousesList 
-          houses={filteredHouses}
-          onDeleteHouse={deleteHouse}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          onHousesUpdate={updateHouses}
-        />
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-8">
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <div className="flex items-center justify-center mb-3">
+              <Home className="w-8 h-8 text-blue-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-1">{houses.length}</h3>
+            <p className="text-white/70">Total Properties</p>
+          </div>
+          
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <div className="flex items-center justify-center mb-3">
+              <Users className="w-8 h-8 text-green-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-1">
+              {new Set(houses.map(h => h.agent_name)).size}
+            </h3>
+            <p className="text-white/70">Active Agents</p>
+          </div>
+          
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <div className="flex items-center justify-center mb-3">
+              <Network className="w-8 h-8 text-purple-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-1">
+              {houses.length > 1 ? Math.round(houses.reduce((acc, house, i) => {
+                if (i === 0) return 0
+                return acc + calculateDistance(
+                  houses[i-1].latitude, houses[i-1].longitude,
+                  house.latitude, house.longitude
+                )
+              }, 0)) : 0}
+            </h3>
+            <p className="text-white/70">Network Coverage (km)</p>
+          </div>
+        </div>
       </div>
 
-      {showLocationModal && (
-        <LocationModal 
-          onClose={() => setShowLocationModal(false)}
-          onLocationGranted={(location) => {
-            setShowLocationModal(false)
-            // Handle location data if needed
-          }}
-        />
-      )}
+      {/* Map and List Section */}
+      <div className="grid lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
+        {/* Map Section */}
+        <div className="card relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full blur-2xl"></div>
+          
+          <div className="flex items-center gap-4 mb-6">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl blur-lg opacity-30"></div>
+              <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-xl shadow-lg">
+                <MapPin className="w-7 h-7 text-white" />
+              </div>
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold gradient-text">Property Network Map</h2>
+              <p className="text-gray-600">Interactive map showing all properties</p>
+            </div>
+          </div>
 
-      {showSuccessModal && (
-        <SuccessModal 
-          message={successMessage}
-          onClose={() => setShowSuccessModal(false)}
-        />
-      )}
+          {/* Map Container */}
+          <div className="relative h-96 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl overflow-hidden border-2 border-blue-200">
+            {/* Map Placeholder - In a real app, you'd integrate Google Maps or Mapbox here */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MapPin className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">Interactive Map</h3>
+                <p className="text-gray-500 text-sm mb-4">
+                  {houses.length} properties would be displayed here
+                </p>
+                <div className="grid grid-cols-2 gap-2 max-w-xs mx-auto">
+                  {houses.slice(0, 4).map((house, index) => (
+                    <div
+                      key={house.id}
+                      className={`p-2 rounded-lg text-xs cursor-pointer transition-all ${
+                        selectedHouse?.id === house.id
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-white/80 text-gray-700 hover:bg-blue-100'
+                      }`}
+                      onClick={() => handleHouseClick(house)}
+                    >
+                      <div className="font-semibold truncate">{house.name}</div>
+                      <div className="text-xs opacity-75">{house.agent_name}</div>
+                    </div>
+                  ))}
+                </div>
+                {houses.length > 4 && (
+                  <p className="text-xs text-gray-400 mt-2">
+                    +{houses.length - 4} more properties
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Map Controls */}
+            <div className="absolute top-4 right-4 flex gap-2">
+              <button className="p-2 bg-white/90 rounded-lg shadow-lg hover:bg-white transition-colors">
+                <Search className="w-4 h-4 text-gray-600" />
+              </button>
+              <button className="p-2 bg-white/90 rounded-lg shadow-lg hover:bg-white transition-colors">
+                <Filter className="w-4 h-4 text-gray-600" />
+              </button>
+            </div>
+          </div>
+
+          {/* Selected House Info */}
+          {selectedHouse && (
+            <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+              <h4 className="font-semibold text-gray-800 mb-2">{selectedHouse.name}</h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-600">Agent</p>
+                  <p className="font-medium">{selectedHouse.agent_name}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Coordinates</p>
+                  <p className="font-mono text-xs">{selectedHouse.latitude.toFixed(6)}, {selectedHouse.longitude.toFixed(6)}</p>
+                </div>
+              </div>
+              {selectedHouse.notes && (
+                <div className="mt-2">
+                  <p className="text-gray-600 text-sm">Notes</p>
+                  <p className="text-sm">{selectedHouse.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Properties List */}
+        <div className="card relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/10 to-blue-500/10 rounded-full blur-2xl"></div>
+          
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-blue-500 rounded-xl blur-lg opacity-30"></div>
+                <div className="relative bg-gradient-to-r from-green-600 to-blue-600 p-3 rounded-xl shadow-lg">
+                  <Home className="w-7 h-7 text-white" />
+                </div>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold gradient-text">All Properties</h2>
+                <p className="text-gray-600">Browse and manage your properties</p>
+              </div>
+            </div>
+            <a
+              href="/add-house"
+              className="btn btn-primary flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Property
+            </a>
+          </div>
+
+          {/* Search */}
+          <div className="relative mb-6">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search properties..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="input pl-10 w-full"
+            />
+          </div>
+
+          {/* Properties List */}
+          <div className="space-y-4 max-h-96 overflow-y-auto">
+            {filteredHouses.length === 0 ? (
+              <div className="text-center py-8">
+                <Home className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                  {searchTerm ? 'No properties found' : 'No properties yet'}
+                </h3>
+                <p className="text-gray-500 mb-4">
+                  {searchTerm ? 'Try adjusting your search terms' : 'Add your first property to get started'}
+                </p>
+                {!searchTerm && (
+                  <a href="/add-house" className="btn btn-primary">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add First Property
+                  </a>
+                )}
+              </div>
+            ) : (
+              filteredHouses.map((house) => (
+                <div
+                  key={house.id}
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    selectedHouse?.id === house.id
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50/50'
+                  }`}
+                  onClick={() => handleHouseClick(house)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-800 mb-1">{house.name}</h3>
+                      <p className="text-sm text-gray-600 mb-2">Agent: {house.agent_name}</p>
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <span>📍 {house.latitude.toFixed(4)}, {house.longitude.toFixed(4)}</span>
+                        <span>📅 {new Date(house.created_at).toLocaleDateString()}</span>
+                      </div>
+                      {house.notes && (
+                        <p className="text-sm text-gray-600 mt-2 line-clamp-2">{house.notes}</p>
+                      )}
+                    </div>
+                    <div className="ml-4">
+                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* View All Button */}
+          {houses.length > 0 && (
+            <div className="mt-6 text-center">
+              <a href="/saved-houses" className="btn btn-secondary">
+                View All Properties ({houses.length})
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
