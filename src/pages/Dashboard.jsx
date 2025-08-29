@@ -56,6 +56,16 @@ const Dashboard = ({ user }) => {
   const navigateToLocation = (house) => {
     const { latitude, longitude, name } = house
     
+    // Ask for permission before navigating
+    const confirmed = confirm(
+      `Navigate to ${formatHouseName(name)}?\n\n` +
+      `This will open Google Maps with directions to:\n` +
+      `📍 ${latitude.toFixed(6)}, ${longitude.toFixed(6)}\n\n` +
+      `Click OK to continue to Google Maps.`
+    )
+    
+    if (!confirmed) return
+    
     // Check if device supports navigation
     if (navigator.share) {
       // Use native sharing on mobile devices

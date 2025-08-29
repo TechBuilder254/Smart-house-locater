@@ -15,6 +15,18 @@ const Header = ({ isMenuOpen, setIsMenuOpen, user, onAuthClick, showBackButton =
     navigate(-1)
   }
 
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut()
+      // Redirect to landing page immediately
+      window.location.href = '/'
+    } catch (error) {
+      console.error('Error signing out:', error)
+      // Still redirect even if there's an error
+      window.location.href = '/'
+    }
+  }
+
   const navItems = [
     { path: '/dashboard', icon: Home, label: 'Dashboard', active: location.pathname === '/dashboard' },
     { path: '/saved-houses', icon: List, label: 'Properties', active: location.pathname === '/saved-houses' },
@@ -80,10 +92,7 @@ const Header = ({ isMenuOpen, setIsMenuOpen, user, onAuthClick, showBackButton =
                     <User className="w-4 h-4 text-white" />
                   </div>
                   <button
-                    onClick={() => {
-                      supabase.auth.signOut()
-                      window.location.reload()
-                    }}
+                    onClick={handleSignOut}
                     className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                     title="Sign Out"
                   >
@@ -155,10 +164,7 @@ const Header = ({ isMenuOpen, setIsMenuOpen, user, onAuthClick, showBackButton =
                     <p className="text-xs text-gray-500">Property Manager</p>
                   </div>
                   <button
-                    onClick={() => {
-                      supabase.auth.signOut()
-                      window.location.reload()
-                    }}
+                    onClick={handleSignOut}
                     className="p-2 text-gray-400 hover:text-gray-600"
                   >
                     <LogOut className="w-4 h-4" />
