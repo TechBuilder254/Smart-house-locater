@@ -1,7 +1,8 @@
 import React from 'react'
-import { Home, MapPin, Navigation, Menu, X, Plus, List } from 'lucide-react'
+import { Home, MapPin, Navigation, Menu, X, Plus, List, User, LogOut } from 'lucide-react'
+import { supabase } from '../services/supabase'
 
-const Header = ({ isMenuOpen, setIsMenuOpen }) => {
+const Header = ({ isMenuOpen, setIsMenuOpen, user, onAuthClick }) => {
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
   }
@@ -88,6 +89,33 @@ const Header = ({ isMenuOpen, setIsMenuOpen }) => {
                       <Plus className="w-4 h-4" />
                       <span className="text-sm font-medium">Add Property</span>
                     </a>
+                    
+                    {/* Auth Section */}
+                    {user ? (
+                      <div className="flex items-center gap-3 ml-4 pl-4 border-l border-white/20">
+                        <div className="text-white text-sm">
+                          <span className="font-medium">{user.user_metadata?.name || user.email}</span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            supabase.auth.signOut()
+                            window.location.reload()
+                          }}
+                          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                          title="Sign Out"
+                        >
+                          <LogOut className="w-4 h-4 text-white" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={onAuthClick}
+                        className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-white ml-4"
+                      >
+                        <User className="w-4 h-4" />
+                        <span className="text-sm font-medium">Sign In</span>
+                      </button>
+                    )}
                   </nav>
                 </div>
 
@@ -108,6 +136,38 @@ const Header = ({ isMenuOpen, setIsMenuOpen }) => {
                       <Plus className="w-4 h-4" />
                       <span className="font-medium">Add Property</span>
                     </a>
+                    
+                    {/* Mobile Auth Section */}
+                    {user ? (
+                      <>
+                        <div className="border-t border-white/10 pt-3 mt-3">
+                          <div className="flex items-center justify-between text-white text-sm mb-2">
+                            <span className="font-medium">{user.user_metadata?.name || user.email}</span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              supabase.auth.signOut()
+                              window.location.reload()
+                            }}
+                            className="flex items-center gap-3 text-white text-base hover:text-red-200 transition-colors duration-200 hover:scale-105 p-2 rounded-lg hover:bg-white/10 w-full"
+                          >
+                            <LogOut className="w-4 h-4" />
+                            <span className="font-medium">Sign Out</span>
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          onAuthClick()
+                          setIsMenuOpen(false)
+                        }}
+                        className="flex items-center gap-3 text-white text-base hover:text-green-200 transition-colors duration-200 hover:scale-105 p-2 rounded-lg hover:bg-white/10 w-full"
+                      >
+                        <User className="w-4 h-4" />
+                        <span className="font-medium">Sign In</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

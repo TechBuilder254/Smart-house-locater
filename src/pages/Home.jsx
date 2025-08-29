@@ -4,7 +4,7 @@ import TestConnection from '../components/TestConnection'
 import SimpleMap from '../components/SimpleMap'
 import apiService from '../services/api'
 
-const Home = () => {
+const Home = ({ user }) => {
   const [houses, setHouses] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -47,7 +47,7 @@ const Home = () => {
   // Filter houses based on search term
   const filteredHouses = houses.filter(house =>
     house.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    house.agent_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (house.caretaker_name && house.caretaker_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (house.notes && house.notes.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
@@ -65,6 +65,32 @@ const Home = () => {
               Math.sin(dLon/2) * Math.sin(dLon/2)
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
     return R * c
+  }
+
+  // Show authentication prompt
+  if (!user) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-96">
+          <div className="text-center max-w-md">
+            <div className="relative mx-auto mb-6 w-16 h-16">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full blur-lg opacity-30"></div>
+              <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 p-4 rounded-full shadow-lg">
+                <HomeIcon className="w-8 h-8 text-white" />
+              </div>
+            </div>
+            <h3 className="text-xl font-bold text-gray-700 mb-2">Welcome to Smart House Locator</h3>
+            <p className="text-gray-500 mb-6">Please sign in to view and manage your property network</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="btn btn-primary"
+            >
+              Sign In to Continue
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // Show loading state
@@ -141,15 +167,15 @@ const Home = () => {
             <p className="text-white/70">Total Properties</p>
           </div>
           
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-            <div className="flex items-center justify-center mb-3">
-              <Users className="w-8 h-8 text-green-400" />
-            </div>
-            <h3 className="text-2xl font-bold text-white mb-1">
-              {new Set(houses.map(h => h.agent_name)).size}
-            </h3>
-            <p className="text-white/70">Active Agents</p>
-          </div>
+                     <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+             <div className="flex items-center justify-center mb-3">
+               <Users className="w-8 h-8 text-green-400" />
+             </div>
+             <h3 className="text-2xl font-bold text-white mb-1">
+               {new Set(houses.filter(h => h.caretaker_name).map(h => h.caretaker_name)).size}
+             </h3>
+             <p className="text-white/70">Caretakers</p>
+           </div>
           
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
             <div className="flex items-center justify-center mb-3">
@@ -201,10 +227,12 @@ const Home = () => {
             <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
               <h4 className="font-semibold text-gray-800 mb-2">{selectedHouse.name}</h4>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-600">Agent</p>
-                  <p className="font-medium">{selectedHouse.agent_name}</p>
-                </div>
+                                 {selectedHouse.caretaker_name && (
+                   <div>
+                     <p className="text-gray-600">Caretaker</p>
+                     <p className="font-medium">{selectedHouse.caretaker_name}</p>
+                   </div>
+                 )}
                 <div>
                   <p className="text-gray-600">Coordinates</p>
                   <p className="font-mono text-xs">{selectedHouse.latitude.toFixed(6)}, {selectedHouse.longitude.toFixed(6)}</p>
@@ -255,8 +283,8 @@ const Home = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="input pl-10 w-full"
-            />
-          </div>
+        />
+      </div>
 
           {/* Properties List */}
           <div className="space-y-4 max-h-96 overflow-y-auto">
@@ -290,7 +318,9 @@ const Home = () => {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-800 mb-1">{house.name}</h3>
-                      <p className="text-sm text-gray-600 mb-2">Agent: {house.agent_name}</p>
+                                             {house.caretaker_name && (
+                         <p className="text-sm text-gray-600 mb-2">Caretaker: {house.caretaker_name}</p>
+                       )}
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span>📍 {house.latitude.toFixed(4)}, {house.longitude.toFixed(4)}</span>
                         <span>📅 {new Date(house.created_at).toLocaleDateString()}</span>

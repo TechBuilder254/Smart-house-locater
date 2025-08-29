@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react'
-import { PlusCircle, MapPin, User, FileText, Navigation, AlertCircle } from 'lucide-react'
+import { PlusCircle, MapPin, User, FileText, Navigation, AlertCircle, Phone } from 'lucide-react'
 import apiService from '../services/api'
 
 const AddHouse = ({ onAddHouse, onShowLocationModal }) => {
   const [formData, setFormData] = useState({
     name: '',
-    agent: '',
-    notes: ''
+    notes: '',
+    caretaker_name: '',
+    caretaker_phone: ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [currentLocation, setCurrentLocation] = useState(null)
@@ -99,12 +100,13 @@ const AddHouse = ({ onAddHouse, onShowLocationModal }) => {
       // Prepare house data for API
       const houseData = {
         name: formData.name,
-        agentName: formData.agent,
         location: {
           latitude: currentLocation.latitude,
           longitude: currentLocation.longitude
         },
-        notes: formData.notes || ''
+        notes: formData.notes || '',
+        caretaker_name: formData.caretaker_name || null,
+        caretaker_phone: formData.caretaker_phone || null
       }
 
       // Save to MongoDB via API
@@ -117,8 +119,9 @@ const AddHouse = ({ onAddHouse, onShowLocationModal }) => {
         // Reset form and location
         setFormData({
           name: '',
-          agent: '',
-          notes: ''
+          notes: '',
+          caretaker_name: '',
+          caretaker_phone: ''
         })
         setCurrentLocation(null)
         setLocationAccuracy(null)
@@ -184,20 +187,37 @@ const AddHouse = ({ onAddHouse, onShowLocationModal }) => {
         </div>
 
         <div>
-          <label htmlFor="agent" className="block text-sm font-medium text-secondary-700 mb-2">
-            Agent Name
+          <label htmlFor="caretaker_name" className="block text-sm font-medium text-secondary-700 mb-2">
+            Caretaker Name (Optional)
           </label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-secondary-400" />
             <input
               type="text"
-              id="agent"
-              name="agent"
-              value={formData.agent}
+              id="caretaker_name"
+              name="caretaker_name"
+              value={formData.caretaker_name}
               onChange={handleInputChange}
-              placeholder="Enter your name"
+              placeholder="Enter caretaker name"
               className="input pl-10"
-              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="caretaker_phone" className="block text-sm font-medium text-secondary-700 mb-2">
+            Caretaker Phone (Optional)
+          </label>
+          <div className="relative">
+            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-secondary-400" />
+            <input
+              type="tel"
+              id="caretaker_phone"
+              name="caretaker_phone"
+              value={formData.caretaker_phone}
+              onChange={handleInputChange}
+              placeholder="Enter caretaker phone number"
+              className="input pl-10"
             />
           </div>
         </div>

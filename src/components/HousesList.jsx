@@ -77,7 +77,7 @@ const HousesList = ({ houses, onDeleteHouse, searchTerm, onSearchChange, onHouse
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search houses by name or agent..."
+            placeholder="Search houses by name or caretaker..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             className="input pl-12 bg-white/90"
@@ -135,10 +135,12 @@ const HousesList = ({ houses, onDeleteHouse, searchTerm, onSearchChange, onHouse
                     {house.name}
                   </h3>
                   <div className="flex items-center gap-4 text-sm text-secondary-600">
-                    <div className="flex items-center gap-1">
-                      <User className="w-4 h-4" />
-                      <span>{house.agent_name}</span>
-                    </div>
+                    {house.caretaker_name && (
+                      <div className="flex items-center gap-1">
+                        <User className="w-4 h-4" />
+                        <span>Caretaker: {house.caretaker_name}</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
                       <span>{formatDate(house.created_at)}</span>

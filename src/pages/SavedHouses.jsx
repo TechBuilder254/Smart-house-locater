@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
+import { Home as HomeIcon } from 'lucide-react'
 import HousesList from '../components/HousesList'
 import apiService from '../services/api'
 
-const SavedHouses = () => {
+const SavedHouses = ({ user }) => {
   const [houses, setHouses] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -29,8 +30,10 @@ const SavedHouses = () => {
   }
 
   useEffect(() => {
-    loadHouses()
-  }, [])
+    if (user) {
+      loadHouses()
+    }
+  }, [user])
 
   const deleteHouse = async (houseId) => {
     try {
@@ -93,6 +96,32 @@ const SavedHouses = () => {
               className="btn btn-primary"
             >
               Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show authentication prompt
+  if (!user) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-96">
+          <div className="text-center max-w-md">
+            <div className="relative mx-auto mb-6 w-16 h-16">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full blur-lg opacity-30"></div>
+              <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 p-4 rounded-full shadow-lg">
+                <HomeIcon className="w-8 h-8 text-white" />
+              </div>
+            </div>
+            <h3 className="text-xl font-bold text-gray-700 mb-2">Access Your Saved Houses</h3>
+            <p className="text-gray-500 mb-6">Please sign in to view your saved properties</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="btn btn-primary"
+            >
+              Sign In to Continue
             </button>
           </div>
         </div>

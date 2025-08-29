@@ -1,171 +1,111 @@
-import supabaseService from './supabase.js';
+import { supabase } from './supabase'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const apiService = {
+  // Get current user
+  getCurrentUser: async () => {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    return { user, error }
+  },
 
-class ApiService {
-  constructor() {
-    this.baseURL = API_BASE_URL;
-    console.log('🔗 API Service initialized with base URL:', this.baseURL);
-  }
-
-  // Helper method for making HTTP requests with fallback to Supabase
-  async makeRequest(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`;
-    
-    const defaultOptions = {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      ...options,
-    };
-
+  // Get houses for current user
+  getHouses: async () => {
     try {
-      console.log('🌐 Making API request to:', url);
-      const response = await fetch(url, defaultOptions);
-      
-      console.log('📡 Response status:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ API Error Response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status}`);
+      const { data, error } = await supabase
+        .from('houses')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        throw error
       }
-      
-      const data = await response.json();
-      console.log('✅ API Response:', data);
-      return data;
+
+      return { success: true, data }
     } catch (error) {
-      console.error('❌ API Request Error:', error);
-      console.log('🔄 Falling back to direct Supabase connection...');
-      throw error;
+      console.error('Error fetching houses:', error)
+      return { success: false, message: error.message }
     }
-  }
+  },
 
-  // Health check with fallback
-  async healthCheck() {
+  // Create a new house
+  createHouse: async (houseData) => {
     try {
-      return await this.makeRequest('/health');
-    } catch (error) {
-      console.log('🔄 Using Supabase fallback for health check');
-      return await supabaseService.healthCheck();
-    }
-  }
+      const { data, error } = await supabase
+        .from('houses')
+        .insert([{
+          name: houseData.name,
+          latitude: houseData.location.latitude,
+          longitude: houseData.location.longitude,
+          notes: houseData.notes,
+          caretaker_name: houseData.caretaker_name,
+          caretaker_phone: houseData.caretaker_phone
+        }])
+        .select()
+        .single()
 
-  // Get all houses with fallback
-  async getHouses(search = '', limit = 50, page = 1) {
-    try {
-      const params = new URLSearchParams();
-      if (search) params.append('search', search);
-      if (limit) params.append('limit', limit);
-      if (page) params.append('page', page);
-
-      const queryString = params.toString();
-      const endpoint = `/houses${queryString ? `?${queryString}` : ''}`;
-      
-      return await this.makeRequest(endpoint);
-    } catch (error) {
-      console.log('🔄 Using Supabase fallback for getHouses');
-      return await supabaseService.getHouses(search, limit, page);
-    }
-  }
-
-  // Create new house with fallback
-  async createHouse(houseData) {
-    try {
-      return await this.makeRequest('/houses', {
-        method: 'POST',
-        body: JSON.stringify(houseData),
-      });
-    } catch (error) {
-      console.log('🔄 Using Supabase fallback for createHouse');
-      return await supabaseService.createHouse(houseData);
-    }
-  }
-
-  // Delete house with fallback
-  async deleteHouse(id) {
-    try {
-      return await this.makeRequest(`/houses/${id}`, {
-        method: 'DELETE',
-      });
-    } catch (error) {
-      console.log('🔄 Using Supabase fallback for deleteHouse');
-      return await supabaseService.deleteHouse(id);
-    }
-  }
-
-  // Other methods remain the same...
-  async getHouse(id) {
-    try {
-      return await this.makeRequest(`/houses/${id}`);
-    } catch (error) {
-      console.log('🔄 Using Supabase fallback for getHouse');
-      // For individual house, we'll get all houses and filter
-      const result = await supabaseService.getHouses();
-      const house = result.data.find(h => h.id === id);
-      if (!house) throw new Error('House not found');
-      return { success: true, data: house };
-    }
-  }
-
-  async updateHouse(id, houseData) {
-    try {
-      return await this.makeRequest(`/houses/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(houseData),
-      });
-    } catch (error) {
-      console.log('🔄 Using Supabase fallback for updateHouse');
-      throw new Error('Update not implemented in fallback');
-    }
-  }
-
-  async deleteAllHouses() {
-    try {
-      return await this.makeRequest('/houses', {
-        method: 'DELETE',
-      });
-    } catch (error) {
-      console.log('🔄 Using Supabase fallback for deleteAllHouses');
-      throw new Error('Delete all not implemented in fallback');
-    }
-  }
-
-  async migrateFromLocalStorage(localData) {
-    try {
-      return await this.makeRequest('/migrate', {
-        method: 'POST',
-        body: JSON.stringify({ localData }),
-      });
-    } catch (error) {
-      console.log('🔄 Using Supabase fallback for migrateFromLocalStorage');
-      const results = [];
-      
-      for (const house of localData) {
-        try {
-          const result = await supabaseService.createHouse({
-            name: house.name,
-            agentName: house.agentName,
-            location: {
-              latitude: house.latitude,
-              longitude: house.longitude
-            },
-            notes: house.notes || ''
-          });
-          results.push({ success: true, data: result.data, originalId: house.id });
-        } catch (error) {
-          results.push({ success: false, error: error.message, originalId: house.id });
-        }
+      if (error) {
+        throw error
       }
-      
-      return {
-        success: true,
-        message: `Migration completed. ${results.filter(r => r.success).length} houses migrated successfully.`,
-        results
-      };
+
+      return { success: true, data }
+    } catch (error) {
+      console.error('Error creating house:', error)
+      return { success: false, message: error.message }
+    }
+  },
+
+  // Delete a house
+  deleteHouse: async (houseId) => {
+    try {
+      const { error } = await supabase
+        .from('houses')
+        .delete()
+        .eq('id', houseId)
+
+      if (error) {
+        throw error
+      }
+
+      return { success: true }
+    } catch (error) {
+      console.error('Error deleting house:', error)
+      return { success: false, message: error.message }
+    }
+  },
+
+  // Update a house
+  updateHouse: async (houseId, updates) => {
+    try {
+      const { data, error } = await supabase
+        .from('houses')
+        .update(updates)
+        .eq('id', houseId)
+        .select()
+        .single()
+
+      if (error) {
+        throw error
+      }
+
+      return { success: true, data }
+    } catch (error) {
+      console.error('Error updating house:', error)
+      return { success: false, message: error.message }
+    }
+  },
+
+  // Sign out user
+  signOut: async () => {
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        throw error
+      }
+      return { success: true }
+    } catch (error) {
+      console.error('Error signing out:', error)
+      return { success: false, message: error.message }
     }
   }
 }
 
-const apiService = new ApiService();
-export default apiService;
+export default apiService
