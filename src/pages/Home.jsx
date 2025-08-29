@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { MapPin, Home as HomeIcon, Users, Network, Plus, Search, Filter } from 'lucide-react'
 import TestConnection from '../components/TestConnection'
-import GoogleMap from '../components/GoogleMap'
+import SimpleMap from '../components/SimpleMap'
 import apiService from '../services/api'
 
 const Home = () => {
@@ -182,14 +182,14 @@ const Home = () => {
                 <MapPin className="w-7 h-7 text-white" />
               </div>
             </div>
-            <div>
-              <h2 className="text-2xl font-bold gradient-text">Property Network Map</h2>
-              <p className="text-gray-600">Interactive map showing all properties</p>
-            </div>
+                         <div>
+               <h2 className="text-2xl font-bold gradient-text">Property Network Visualization</h2>
+               <p className="text-gray-600">Interactive network showing all properties with connections</p>
+             </div>
           </div>
 
-          {/* Real Google Map */}
-          <GoogleMap 
+          {/* Simple Network Map */}
+          <SimpleMap 
             houses={houses}
             selectedHouse={selectedHouse}
             onHouseClick={handleHouseClick}
