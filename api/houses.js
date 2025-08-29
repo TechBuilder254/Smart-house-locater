@@ -114,7 +114,7 @@ async function createHouse(req, res) {
   
   if (error) {
     throw error;
-    }
+  }
   
   res.status(201).json({
     success: true,
@@ -122,3 +122,5 @@ async function createHouse(req, res) {
     data: house
   });
 }
+
+
