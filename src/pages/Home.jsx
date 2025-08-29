@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { MapPin, Home, Users, Network, Plus, Search, Filter } from 'lucide-react'
+import { MapPin, Home as HomeIcon, Users, Network, Plus, Search, Filter } from 'lucide-react'
 import TestConnection from '../components/TestConnection'
 import apiService from '../services/api'
 
@@ -134,7 +134,7 @@ const Home = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-8">
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
             <div className="flex items-center justify-center mb-3">
-              <Home className="w-8 h-8 text-blue-400" />
+              <HomeIcon className="w-8 h-8 text-blue-400" />
             </div>
             <h3 className="text-2xl font-bold text-white mb-1">{houses.length}</h3>
             <p className="text-white/70">Total Properties</p>
@@ -267,7 +267,7 @@ const Home = () => {
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-blue-500 rounded-xl blur-lg opacity-30"></div>
                 <div className="relative bg-gradient-to-r from-green-600 to-blue-600 p-3 rounded-xl shadow-lg">
-                  <Home className="w-7 h-7 text-white" />
+                  <HomeIcon className="w-7 h-7 text-white" />
                 </div>
               </div>
               <div>
@@ -300,7 +300,7 @@ const Home = () => {
           <div className="space-y-4 max-h-96 overflow-y-auto">
             {filteredHouses.length === 0 ? (
               <div className="text-center py-8">
-                <Home className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <HomeIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-600 mb-2">
                   {searchTerm ? 'No properties found' : 'No properties yet'}
                 </h3>
