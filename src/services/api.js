@@ -3,6 +3,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL;
+    console.log('🔗 API Service initialized with base URL:', this.baseURL);
   }
 
   // Helper method for making HTTP requests
@@ -17,19 +18,22 @@ class ApiService {
     };
 
     try {
-      console.log('Making API request to:', url);
+      console.log('🌐 Making API request to:', url);
       const response = await fetch(url, defaultOptions);
+      
+      console.log('📡 Response status:', response.status);
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('API Error Response:', errorText);
+        console.error('❌ API Error Response:', errorText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log('✅ API Response:', data);
       return data;
     } catch (error) {
-      console.error('API Request Error:', error);
+      console.error('❌ API Request Error:', error);
       throw error;
     }
   }
