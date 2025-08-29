@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Home, MapPin, Plus, TrendingUp, Users, Calendar, Search, Filter, Eye, Edit, Trash2, Clock, Map, Navigation } from 'lucide-react'
+import { Home, MapPin, Plus, TrendingUp, Users, Calendar, Search, Filter, Eye, Edit, Trash2, Clock, Map, Navigation, User, LogOut, Settings } from 'lucide-react'
 import Header from '../components/Header'
 import SimpleMap from '../components/SimpleMap'
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal'
@@ -13,6 +13,7 @@ const Dashboard = ({ user }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, house: null })
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
 
   // Load houses from Supabase API
   const loadHouses = async () => {
@@ -79,6 +80,20 @@ const Dashboard = ({ user }) => {
     }
     // Otherwise return the name as entered
     return name
+  }
+
+  // Get personalized greeting based on time
+  const getGreeting = () => {
+    const hour = new Date().getHours()
+    const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'there'
+    
+    if (hour < 12) {
+      return `Good morning, ${userName}! Welcome back`
+    } else if (hour < 17) {
+      return `Good afternoon, ${userName}! Welcome back`
+    } else {
+      return `Good evening, ${userName}! Welcome back`
+    }
   }
 
   const filteredHouses = houses.filter(house =>
@@ -161,14 +176,62 @@ const Dashboard = ({ user }) => {
         isMenuOpen={isMenuOpen}
         setIsMenuOpen={setIsMenuOpen}
         user={user}
+        onProfileClick={() => setShowProfileMenu(!showProfileMenu)}
       />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Header */}
+        {/* Page Header with Personalized Greeting */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-2">Welcome back! Here's an overview of your properties.</p>
+          <p className="text-gray-600 mt-2">{getGreeting()}</p>
         </div>
+
+        {/* Profile Menu */}
+        {showProfileMenu && (
+          <div className="fixed inset-0 z-40" onClick={() => setShowProfileMenu(false)}>
+            <div className="absolute inset-0 bg-black/20"></div>
+          </div>
+        )}
+        
+        {showProfileMenu && (
+          <div className="fixed top-20 right-4 z-50 bg-white rounded-xl shadow-lg border border-gray-200 p-4 min-w-64">
+            <div className="flex items-center space-x-3 mb-4 pb-4 border-b border-gray-200">
+              <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center">
+                <User className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900">
+                  {user?.user_metadata?.name || 'User'}
+                </h3>
+                <p className="text-sm text-gray-600">{user?.email}</p>
+                <p className="text-xs text-gray-500">Property Manager</p>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <button className="w-full flex items-center space-x-3 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                <User className="w-4 h-4" />
+                <span>Profile Settings</span>
+              </button>
+              <button className="w-full flex items-center space-x-3 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                <Settings className="w-4 h-4" />
+                <span>Account Settings</span>
+              </button>
+              <div className="border-t border-gray-200 pt-2">
+                <button 
+                  onClick={() => {
+                    // Handle sign out
+                    window.location.href = '/'
+                  }}
+                  className="w-full flex items-center space-x-3 px-3 py-2 text-left text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

@@ -3,7 +3,7 @@ import { Home, MapPin, Navigation, Menu, X, Plus, List, User, LogOut, Settings, 
 import { supabase } from '../services/supabase'
 import { useNavigate, useLocation } from 'react-router-dom'
 
-const Header = ({ isMenuOpen, setIsMenuOpen, user, onAuthClick, showBackButton = false, title = "Smart House Locator" }) => {
+const Header = ({ isMenuOpen, setIsMenuOpen, user, onAuthClick, showBackButton = false, title = "Smart House Locator", onProfileClick }) => {
   const navigate = useNavigate()
   const location = useLocation()
   
@@ -99,9 +99,13 @@ const Header = ({ isMenuOpen, setIsMenuOpen, user, onAuthClick, showBackButton =
                         <p className="text-xs font-medium text-white truncate max-w-24">{user.user_metadata?.name || user.email}</p>
                         <p className="text-xs text-white/70">Property Manager</p>
                       </div>
-                      <div className="w-8 h-8 bg-white/25 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/40 shadow-lg">
+                      <button
+                        onClick={onProfileClick}
+                        className="w-8 h-8 bg-white/25 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/40 shadow-lg hover:bg-white/35 transition-all duration-200 cursor-pointer"
+                        title="Profile Menu"
+                      >
                         <User className="w-4 h-4 text-white" />
-                      </div>
+                      </button>
                       <button
                         onClick={handleSignOut}
                         className="p-2 text-white/70 hover:text-white hover:bg-white/15 rounded-xl transition-all duration-200"
