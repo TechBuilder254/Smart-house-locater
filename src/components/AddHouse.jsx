@@ -31,6 +31,13 @@ const AddHouse = ({ onAddHouse, onShowLocationModal }) => {
         return
       }
 
+      // High accuracy options
+      const options = {
+        enableHighAccuracy: true,  // Request highest possible accuracy
+        timeout: 60000,           // 60 seconds timeout for high accuracy
+        maximumAge: 0             // Don't use cached position
+      }
+
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const location = {
@@ -44,11 +51,7 @@ const AddHouse = ({ onAddHouse, onShowLocationModal }) => {
         (error) => {
           reject(error)
         },
-        {
-          enableHighAccuracy: true,
-          timeout: 30000,
-          maximumAge: 0
-        }
+        options
       )
     })
   }
@@ -59,22 +62,45 @@ const AddHouse = ({ onAddHouse, onShowLocationModal }) => {
     
     try {
       const location = await getCurrentLocation()
-      setCurrentLocation(location)
-      setLocationAccuracy(location.accuracy)
       
-      // Provide detailed accuracy feedback
-      let accuracyMessage = ''
-      if (location.accuracy <= 10) {
-        accuracyMessage = '🎯 Excellent accuracy!'
-      } else if (location.accuracy <= 25) {
-        accuracyMessage = '✅ Good accuracy'
-      } else if (location.accuracy <= 50) {
-        accuracyMessage = '⚠️ Fair accuracy - consider retrying'
+      // Check if accuracy meets our high standards (10 meters or better)
+      if (location.accuracy > 10) {
+        const retry = confirm(
+          `⚠️ Location accuracy is ${location.accuracy.toFixed(1)} meters (we need 10m or better)\n\n` +
+          `Current accuracy: ${location.accuracy.toFixed(1)}m\n` +
+          `Required accuracy: ≤10m\n\n` +
+          `For better accuracy:\n` +
+          `• Move to an open area\n` +
+          `• Stay away from buildings\n` +
+          `• Wait a few seconds\n\n` +
+          `Would you like to try again?`
+        )
+        
+        if (retry) {
+          setIsCapturingLocation(false)
+          setTimeout(() => captureLocation(), 1000) // Retry after 1 second
+          return
+        } else {
+          // User chose not to retry, but we'll still use the location
+          setCurrentLocation(location)
+          setLocationAccuracy(location.accuracy)
+          alert(
+            `Location captured with ${location.accuracy.toFixed(1)}m accuracy\n\n` +
+            `Coordinates: ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}\n\n` +
+            `Note: Accuracy is above recommended 10m threshold`
+          )
+        }
       } else {
-        accuracyMessage = '❌ Poor accuracy - please retry in open area'
+        // Excellent accuracy (≤10m)
+        setCurrentLocation(location)
+        setLocationAccuracy(location.accuracy)
+        alert(
+          `🎯 Perfect! High accuracy location captured\n\n` +
+          `Accuracy: ${location.accuracy.toFixed(1)} meters\n` +
+          `Coordinates: ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}\n\n` +
+          `This location meets our high accuracy standards!`
+        )
       }
-      
-      alert(`${accuracyMessage}\n\nAccuracy: ${location.accuracy.toFixed(1)} meters\nCoordinates: ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}\n\n${location.accuracy > 50 ? 'Tip: Move to an open area and try again for better accuracy.' : 'Location captured successfully!'}`)
       
     } catch (error) {
       console.error('Error getting location:', error)
@@ -284,16 +310,14 @@ const AddHouse = ({ onAddHouse, onShowLocationModal }) => {
                 <div className="bg-white/50 p-3 rounded-xl">
                   <p className="text-gray-600 font-medium">Accuracy</p>
                   <div className="flex items-center gap-2">
-                    <p className={`font-bold ${locationAccuracy <= 10 ? 'text-green-600' : locationAccuracy <= 25 ? 'text-blue-600' : locationAccuracy <= 50 ? 'text-yellow-600' : 'text-red-600'}`}>
+                    <p className={`font-bold ${locationAccuracy <= 10 ? 'text-green-600' : 'text-red-600'}`}>
                       {locationAccuracy?.toFixed(1)}m
                     </p>
                     {locationAccuracy <= 10 && <span className="text-green-600">🎯</span>}
-                    {locationAccuracy > 10 && locationAccuracy <= 25 && <span className="text-blue-600">✅</span>}
-                    {locationAccuracy > 25 && locationAccuracy <= 50 && <span className="text-yellow-600">⚠️</span>}
-                    {locationAccuracy > 50 && <span className="text-red-600">❌</span>}
+                    {locationAccuracy > 10 && <span className="text-red-600">⚠️</span>}
                   </div>
-                  <p className={`text-xs mt-1 ${locationAccuracy <= 10 ? 'text-green-600' : locationAccuracy <= 25 ? 'text-blue-600' : locationAccuracy <= 50 ? 'text-yellow-600' : 'text-red-600'}`}>
-                    {locationAccuracy <= 10 ? 'Excellent' : locationAccuracy <= 25 ? 'Good' : locationAccuracy <= 50 ? 'Fair' : 'Poor'}
+                  <p className={`text-xs mt-1 ${locationAccuracy <= 10 ? 'text-green-600' : 'text-red-600'}`}>
+                    {locationAccuracy <= 10 ? 'High Accuracy (≤10m)' : 'Below Standard (>10m)'}
                   </p>
                 </div>
                 <div className="bg-white/50 p-3 rounded-xl">
@@ -302,16 +326,17 @@ const AddHouse = ({ onAddHouse, onShowLocationModal }) => {
                 </div>
               </div>
               
-              {/* Retry button for poor accuracy */}
-              {locationAccuracy > 50 && (
+              {/* Retry button for accuracy below 10m */}
+              {locationAccuracy > 10 && (
                 <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <p className="text-yellow-800 text-sm mb-2">
-                    ⚠️ Accuracy is poor ({locationAccuracy.toFixed(1)}m). For better results:
+                    ⚠️ Accuracy is {locationAccuracy.toFixed(1)}m (we recommend ≤10m). For better results:
                   </p>
                   <ul className="text-yellow-700 text-xs space-y-1 mb-3">
                     <li>• Move to an open area away from buildings</li>
                     <li>• Wait 10-15 seconds for GPS to stabilize</li>
                     <li>• Ensure GPS is enabled on your device</li>
+                    <li>• Stand in the center of the property</li>
                   </ul>
                   <button
                     type="button"
@@ -319,7 +344,7 @@ const AddHouse = ({ onAddHouse, onShowLocationModal }) => {
                     disabled={isCapturingLocation}
                     className="btn btn-secondary text-sm"
                   >
-                    {isCapturingLocation ? 'Retrying...' : 'Retry Location Capture'}
+                    {isCapturingLocation ? 'Retrying...' : 'Retry for Better Accuracy'}
                   </button>
                 </div>
               )}
@@ -341,7 +366,7 @@ const AddHouse = ({ onAddHouse, onShowLocationModal }) => {
                     Make sure you are physically at the house location before capturing coordinates.
                   </p>
                   <p className="text-blue-600 text-xs bg-blue-100 p-2 rounded-lg">
-                    💡 <strong>Pro Tip:</strong> For best accuracy, stand outside the house with a clear view of the sky.
+                    🎯 <strong>High Accuracy Required:</strong> We need ≤10m accuracy. Stand outside with clear sky view.
                   </p>
                 </div>
               </div>
@@ -359,14 +384,14 @@ const AddHouse = ({ onAddHouse, onShowLocationModal }) => {
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-bold text-blue-800 text-lg">Capturing GPS Location...</h4>
-                  <p className="text-blue-600 text-sm">Getting your exact coordinates</p>
+                  <h4 className="font-bold text-blue-800 text-lg">Capturing High-Accuracy GPS...</h4>
+                  <p className="text-blue-600 text-sm">Getting precise coordinates (≤10m accuracy)</p>
                 </div>
               </div>
               <div className="bg-white/50 p-4 rounded-xl">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                  <span className="text-blue-700 font-medium">Please wait while we get your exact location...</span>
+                  <span className="text-blue-700 font-medium">Please wait while we get high-accuracy location (≤10m)...</span>
                 </div>
                 <div className="w-full bg-blue-200 rounded-full h-2">
                   <div className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full animate-pulse" style={{width: '60%'}}></div>
