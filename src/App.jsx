@@ -8,7 +8,18 @@ import TermsOfService from './pages/TermsOfService'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import Footer from './components/Footer'
 
+// Debug: Log environment variables
+console.log('🔍 Debug: Environment Variables:', {
+  VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+  VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY ? 'SET' : 'MISSING',
+  VITE_API_URL: import.meta.env.VITE_API_URL,
+  NODE_ENV: import.meta.env.NODE_ENV,
+  MODE: import.meta.env.MODE
+});
+
 function App() {
+  console.log('🔍 Debug: App component rendering');
+  
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
@@ -22,6 +33,10 @@ function App() {
         )}
         
         <main className={`flex-grow transition-all duration-300 ${isMenuOpen ? 'blur-sm' : ''}`}>
+          <div className="p-4 text-white">
+            <h1 className="text-2xl font-bold mb-4">🔍 Debug: App is loading...</h1>
+            <p>If you see this, the App component is working!</p>
+          </div>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/saved-houses" element={<SavedHouses />} />
