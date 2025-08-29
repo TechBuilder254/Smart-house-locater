@@ -61,7 +61,19 @@ const AddHouse = ({ onAddHouse, onShowLocationModal }) => {
       setCurrentLocation(location)
       setLocationAccuracy(location.accuracy)
       
-      alert(`Location captured successfully!\nAccuracy: ${location.accuracy.toFixed(1)} meters\nCoordinates: ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`)
+      // Provide detailed accuracy feedback
+      let accuracyMessage = ''
+      if (location.accuracy <= 10) {
+        accuracyMessage = '🎯 Excellent accuracy!'
+      } else if (location.accuracy <= 25) {
+        accuracyMessage = '✅ Good accuracy'
+      } else if (location.accuracy <= 50) {
+        accuracyMessage = '⚠️ Fair accuracy - consider retrying'
+      } else {
+        accuracyMessage = '❌ Poor accuracy - please retry in open area'
+      }
+      
+      alert(`${accuracyMessage}\n\nAccuracy: ${location.accuracy.toFixed(1)} meters\nCoordinates: ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}\n\n${location.accuracy > 50 ? 'Tip: Move to an open area and try again for better accuracy.' : 'Location captured successfully!'}`)
       
     } catch (error) {
       console.error('Error getting location:', error)
@@ -251,13 +263,46 @@ const AddHouse = ({ onAddHouse, onShowLocationModal }) => {
                 </div>
                 <div className="bg-white/50 p-3 rounded-xl">
                   <p className="text-gray-600 font-medium">Accuracy</p>
-                  <p className="text-gray-800 font-bold">{locationAccuracy?.toFixed(1)} meters</p>
+                  <div className="flex items-center gap-2">
+                    <p className={`font-bold ${locationAccuracy <= 10 ? 'text-green-600' : locationAccuracy <= 25 ? 'text-blue-600' : locationAccuracy <= 50 ? 'text-yellow-600' : 'text-red-600'}`}>
+                      {locationAccuracy?.toFixed(1)}m
+                    </p>
+                    {locationAccuracy <= 10 && <span className="text-green-600">🎯</span>}
+                    {locationAccuracy > 10 && locationAccuracy <= 25 && <span className="text-blue-600">✅</span>}
+                    {locationAccuracy > 25 && locationAccuracy <= 50 && <span className="text-yellow-600">⚠️</span>}
+                    {locationAccuracy > 50 && <span className="text-red-600">❌</span>}
+                  </div>
+                  <p className={`text-xs mt-1 ${locationAccuracy <= 10 ? 'text-green-600' : locationAccuracy <= 25 ? 'text-blue-600' : locationAccuracy <= 50 ? 'text-yellow-600' : 'text-red-600'}`}>
+                    {locationAccuracy <= 10 ? 'Excellent' : locationAccuracy <= 25 ? 'Good' : locationAccuracy <= 50 ? 'Fair' : 'Poor'}
+                  </p>
                 </div>
                 <div className="bg-white/50 p-3 rounded-xl">
                   <p className="text-gray-600 font-medium">Captured</p>
                   <p className="text-gray-800">{new Date(currentLocation.timestamp).toLocaleString()}</p>
                 </div>
               </div>
+              
+              {/* Retry button for poor accuracy */}
+              {locationAccuracy > 50 && (
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-yellow-800 text-sm mb-2">
+                    ⚠️ Accuracy is poor ({locationAccuracy.toFixed(1)}m). For better results:
+                  </p>
+                  <ul className="text-yellow-700 text-xs space-y-1 mb-3">
+                    <li>• Move to an open area away from buildings</li>
+                    <li>• Wait 10-15 seconds for GPS to stabilize</li>
+                    <li>• Ensure GPS is enabled on your device</li>
+                  </ul>
+                  <button
+                    type="button"
+                    onClick={captureLocation}
+                    disabled={isCapturingLocation}
+                    className="btn btn-secondary text-sm"
+                  >
+                    {isCapturingLocation ? 'Retrying...' : 'Retry Location Capture'}
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="mb-6 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl shadow-lg">
