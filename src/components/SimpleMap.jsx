@@ -5,7 +5,7 @@ const SimpleMap = ({ houses, selectedHouse, onHouseClick, center }) => {
   const mapData = useMemo(() => {
     if (!houses.length) return { width: 400, height: 300, points: [] }
 
-    // Calculate bounds
+    // Calculate bounds with better precision
     const lats = houses.map(h => h.latitude)
     const lngs = houses.map(h => h.longitude)
     const minLat = Math.min(...lats)
@@ -13,27 +13,51 @@ const SimpleMap = ({ houses, selectedHouse, onHouseClick, center }) => {
     const minLng = Math.min(...lngs)
     const maxLng = Math.max(...lngs)
 
-    // Add padding
-    const latPadding = (maxLat - minLat) * 0.1
-    const lngPadding = (maxLng - minLng) * 0.1
+    // Add more padding to prevent houses from being cut off
+    const latPadding = Math.max((maxLat - minLat) * 0.2, 0.001) // Minimum 0.001 degrees
+    const lngPadding = Math.max((maxLng - minLng) * 0.2, 0.001) // Minimum 0.001 degrees
 
     const width = 400
     const height = 300
 
-    // Convert coordinates to SVG points
+    // Convert coordinates to SVG points with improved accuracy
     const points = houses.map((house, index) => {
-      const x = ((house.longitude - (minLng - lngPadding)) / ((maxLng + lngPadding) - (minLng - lngPadding))) * width
-      const y = ((maxLat + latPadding) - house.latitude) / ((maxLat + latPadding) - (minLat - latPadding)) * height
+      // Use the padded bounds for calculation
+      const adjustedMinLng = minLng - lngPadding
+      const adjustedMaxLng = maxLng + lngPadding
+      const adjustedMinLat = minLat - latPadding
+      const adjustedMaxLat = maxLat + latPadding
+
+      // Calculate position with better precision
+      const x = ((house.longitude - adjustedMinLng) / (adjustedMaxLng - adjustedMinLng)) * width
+      const y = ((adjustedMaxLat - house.latitude) / (adjustedMaxLat - adjustedMinLat)) * height
+      
+      // Ensure points stay within visible area with more margin
+      const margin = 30
+      const clampedX = Math.max(margin, Math.min(width - margin, x))
+      const clampedY = Math.max(margin, Math.min(height - margin, y))
       
       return {
         ...house,
-        x: Math.max(20, Math.min(width - 20, x)),
-        y: Math.max(20, Math.min(height - 20, y)),
-        index: index + 1
+        x: clampedX,
+        y: clampedY,
+        index: index + 1,
+        originalX: x,
+        originalY: y
       }
     })
 
-    return { width, height, points, bounds: { minLat, maxLat, minLng, maxLng } }
+    return { 
+      width, 
+      height, 
+      points, 
+      bounds: { 
+        minLat: minLat - latPadding, 
+        maxLat: maxLat + latPadding, 
+        minLng: minLng - lngPadding, 
+        maxLng: maxLng + lngPadding 
+      } 
+    }
   }, [houses])
 
   const handlePointClick = (house) => {
@@ -129,17 +153,29 @@ const SimpleMap = ({ houses, selectedHouse, onHouseClick, center }) => {
                   {point.index}
                 </text>
 
-                {/* House name label */}
+                {/* House name label - positioned to avoid overlap */}
                 <text
                   x={point.x}
-                  y={point.y - 15}
+                  y={point.y - 20}
                   textAnchor="middle"
                   fill="#374151"
                   fontSize="10"
                   fontWeight="600"
                   className="pointer-events-none"
                 >
-                  {point.name.length > 12 ? point.name.substring(0, 12) + '...' : point.name}
+                  {point.name.length > 15 ? point.name.substring(0, 15) + '...' : point.name}
+                </text>
+
+                {/* Accuracy indicator */}
+                <text
+                  x={point.x}
+                  y={point.y + 25}
+                  textAnchor="middle"
+                  fill="#6b7280"
+                  fontSize="8"
+                  className="pointer-events-none"
+                >
+                  {point.accuracy ? `${point.accuracy.toFixed(1)}m` : ''}
                 </text>
               </g>
             )
@@ -202,25 +238,11 @@ const SimpleMap = ({ houses, selectedHouse, onHouseClick, center }) => {
         </div>
       </div>
 
-      {/* Network Stats */}
-      <div className="absolute top-4 left-4 bg-white/90 rounded-lg p-3 shadow-lg">
+      {/* Map Info */}
+      <div className="absolute bottom-4 right-4 bg-white/90 rounded-lg p-2 shadow-lg">
         <div className="text-xs text-gray-600">
-          <div className="font-semibold mb-1">Network Stats</div>
           <div>Properties: {houses.length}</div>
-          <div>Connections: {Math.max(0, houses.length - 1)}</div>
-          {houses.length > 1 && (
-            <div>Coverage: {Math.round(
-              houses.reduce((acc, house, i) => {
-                if (i === 0) return 0
-                const prev = houses[i - 1]
-                const distance = Math.sqrt(
-                  Math.pow(house.latitude - prev.latitude, 2) + 
-                  Math.pow(house.longitude - prev.longitude, 2)
-                ) * 111 // Rough conversion to km
-                return acc + distance
-              }, 0)
-            )} km</div>
-          )}
+          <div>Scale: {mapData.bounds ? `${((mapData.bounds.maxLat - mapData.bounds.minLat) * 111000).toFixed(0)}m` : ''}</div>
         </div>
       </div>
     </div>
