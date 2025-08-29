@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 class ApiService {
   constructor() {
@@ -17,13 +17,16 @@ class ApiService {
     };
 
     try {
+      console.log('Making API request to:', url);
       const response = await fetch(url, defaultOptions);
-      const data = await response.json();
-
+      
       if (!response.ok) {
-        throw new Error(data.message || `HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-
+      
+      const data = await response.json();
       return data;
     } catch (error) {
       console.error('API Request Error:', error);

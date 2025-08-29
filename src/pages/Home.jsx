@@ -3,7 +3,6 @@ import AddHouse from '../components/AddHouse'
 import HousesList from '../components/HousesList'
 import LocationModal from '../components/LocationModal'
 import SuccessModal from '../components/SuccessModal'
-import DebugInfo from '../components/DebugInfo'
 import apiService from '../services/api'
 
 const Home = () => {
@@ -50,7 +49,7 @@ const Home = () => {
   const deleteHouse = (houseId) => {
     // This is now handled in the HousesList component via API
     // We just need to update the local state
-    setHouses(prev => prev.filter(house => house._id !== houseId))
+    setHouses(prev => prev.filter(house => house.id !== houseId))
   }
 
   const updateHouses = (updatedHouses) => {
@@ -60,7 +59,7 @@ const Home = () => {
   // Filter houses based on search term
   const filteredHouses = houses.filter(house =>
     house.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    house.agentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    house.agent_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (house.notes && house.notes.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
@@ -114,9 +113,6 @@ const Home = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Debug Info - Temporary for troubleshooting */}
-      <DebugInfo />
-      
       <div className="grid lg:grid-cols-2 gap-8">
         <AddHouse 
           onAddHouse={addHouse}

@@ -39,7 +39,7 @@ const HousesList = ({ houses, onDeleteHouse, searchTerm, onSearchChange, onHouse
       
       if (response.success) {
         // Remove the house from the local state
-        const updatedHouses = houses.filter(house => house._id !== houseId)
+        const updatedHouses = houses.filter(house => house.id !== houseId)
         onHousesUpdate(updatedHouses)
         alert('House deleted successfully from cloud database!')
       } else {
@@ -117,7 +117,7 @@ const HousesList = ({ houses, onDeleteHouse, searchTerm, onSearchChange, onHouse
         ) : (
           displayedHouses.map((house, index) => (
             <div
-              key={house._id}
+              key={house.id}
               className="bg-gradient-to-r from-white to-gray-50 border border-gray-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-2 hover:border-purple-300 relative"
             >
               {/* House Number Badge */}
@@ -137,17 +137,17 @@ const HousesList = ({ houses, onDeleteHouse, searchTerm, onSearchChange, onHouse
                   <div className="flex items-center gap-4 text-sm text-secondary-600">
                     <div className="flex items-center gap-1">
                       <User className="w-4 h-4" />
-                      <span>{house.agentName}</span>
+                      <span>{house.agent_name}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
-                      <span>{formatDate(house.createdAt)}</span>
+                      <span>{formatDate(house.created_at)}</span>
                     </div>
                   </div>
                 </div>
                 
                 <button
-                  onClick={() => handleDeleteHouse(house._id)}
+                  onClick={() => handleDeleteHouse(house.id)}
                   disabled={isLoading}
                   className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Delete house"
@@ -171,7 +171,7 @@ const HousesList = ({ houses, onDeleteHouse, searchTerm, onSearchChange, onHouse
                 <div className="flex items-center gap-2 text-sm text-secondary-500">
                   <MapPin className="w-4 h-4" />
                   <div>
-                    <div>{house.location.latitude.toFixed(6)}, {house.location.longitude.toFixed(6)}</div>
+                    <div>{house.latitude.toFixed(6)}, {house.longitude.toFixed(6)}</div>
                     <div className="text-xs text-secondary-400">
                       Saved to cloud database
                     </div>
@@ -179,7 +179,7 @@ const HousesList = ({ houses, onDeleteHouse, searchTerm, onSearchChange, onHouse
                 </div>
                 
                 <button
-                  onClick={() => openInGoogleMaps(house.location.latitude, house.location.longitude)}
+                  onClick={() => openInGoogleMaps(house.latitude, house.longitude)}
                   className="btn btn-primary text-sm"
                   title="Open in Google Maps"
                 >
