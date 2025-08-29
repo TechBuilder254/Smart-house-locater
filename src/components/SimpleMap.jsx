@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
-import { MapPin, Navigation, Info, Home } from 'lucide-react'
+import { MapPin, Navigation } from 'lucide-react'
 
-const SimpleMap = ({ houses, selectedHouse, onHouseClick, center }) => {
+const SimpleMap = ({ houses, selectedHouse, onHouseClick }) => {
   const mapData = useMemo(() => {
     if (!houses.length) return { width: 400, height: 300, points: [] }
 
@@ -60,24 +60,44 @@ const SimpleMap = ({ houses, selectedHouse, onHouseClick, center }) => {
     }
   }, [houses])
 
-  const handlePointClick = (house) => {
-    onHouseClick(house)
+  // Navigate to property location
+  const navigateToLocation = (house) => {
+    const { latitude, longitude, name } = house
+    
+    // Check if device supports navigation
+    if (navigator.share) {
+      // Use native sharing on mobile devices
+      navigator.share({
+        title: `Navigate to ${name}`,
+        text: `Navigate to ${name}`,
+        url: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`
+      }).catch(() => {
+        // Fallback to opening in new tab
+        window.open(`https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`, '_blank')
+      })
+    } else {
+      // Fallback for desktop browsers
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`, '_blank')
+    }
+  }
+
+  // Format house name to preserve numbers
+  const formatHouseName = (name) => {
+    // If the name is just a number, return it as is
+    if (/^\d+$/.test(name.trim())) {
+      return name.trim()
+    }
+    // Otherwise return the name as entered
+    return name
   }
 
   if (!houses.length) {
     return (
-      <div className="relative h-96 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl overflow-hidden border-2 border-blue-200">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Home className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-700 mb-2">No Properties Yet</h3>
-            <p className="text-gray-500 text-sm mb-4">Add your first property to see it on the map</p>
-            <a href="/add-house" className="btn btn-primary text-sm">
-              Add Property
-            </a>
-          </div>
+      <div className="h-96 bg-gray-50 rounded-lg flex items-center justify-center">
+        <div className="text-center">
+          <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No properties on map</h3>
+          <p className="text-gray-500">Add properties to see them on the map</p>
         </div>
       </div>
     )
@@ -85,37 +105,37 @@ const SimpleMap = ({ houses, selectedHouse, onHouseClick, center }) => {
 
   return (
     <div className="relative">
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl overflow-hidden border-2 border-blue-200 shadow-lg">
-        <svg 
-          width={mapData.width} 
-          height={mapData.height} 
-          className="w-full h-96"
+      {/* Map Container */}
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg border border-gray-200 overflow-hidden">
+        <svg
+          width={mapData.width}
+          height={mapData.height}
+          className="w-full h-auto"
           viewBox={`0 0 ${mapData.width} ${mapData.height}`}
         >
-          {/* Background grid */}
+          {/* Background grid lines */}
           <defs>
-            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e5e7eb" strokeWidth="0.5" opacity="0.3"/>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(59, 130, 246, 0.1)" strokeWidth="1"/>
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#grid)" />
 
-          {/* Connection lines between houses */}
+          {/* Connection lines between properties */}
           {mapData.points.length > 1 && (
             <g>
-              {mapData.points.map((point, i) => {
-                if (i === 0) return null
-                const prevPoint = mapData.points[i - 1]
+              {mapData.points.map((point, index) => {
+                if (index === mapData.points.length - 1) return null
+                const nextPoint = mapData.points[index + 1]
                 return (
                   <line
-                    key={`line-${i}`}
-                    x1={prevPoint.x}
-                    y1={prevPoint.y}
-                    x2={point.x}
-                    y2={point.y}
-                    stroke="#3b82f6"
+                    key={`line-${index}`}
+                    x1={point.x}
+                    y1={point.y}
+                    x2={nextPoint.x}
+                    y2={nextPoint.y}
+                    stroke="rgba(59, 130, 246, 0.3)"
                     strokeWidth="2"
-                    opacity="0.6"
                     strokeDasharray="5,5"
                   />
                 )
@@ -123,126 +143,127 @@ const SimpleMap = ({ houses, selectedHouse, onHouseClick, center }) => {
             </g>
           )}
 
-          {/* House location points */}
-          {mapData.points.map((point) => {
-            const isSelected = selectedHouse?.id === point.id
-            return (
-              <g key={point.id}>
-                {/* Connection point */}
+          {/* Property points */}
+          {mapData.points.map((point) => (
+            <g key={point.id}>
+              {/* Point circle */}
+              <circle
+                cx={point.x}
+                cy={point.y}
+                r={selectedHouse?.id === point.id ? "12" : "8"}
+                fill={selectedHouse?.id === point.id ? "#1e40af" : "#3b82f6"}
+                stroke="white"
+                strokeWidth="2"
+                className="cursor-pointer hover:scale-110 transition-transform"
+                onClick={() => onHouseClick(point)}
+              />
+              
+              {/* Point number */}
+              <text
+                x={point.x}
+                y={point.y}
+                textAnchor="middle"
+                dy="0.35em"
+                fill="white"
+                fontSize="10"
+                fontWeight="bold"
+                pointerEvents="none"
+              >
+                {point.index}
+              </text>
+
+              {/* Accuracy indicator */}
+              {point.accuracy && (
                 <circle
                   cx={point.x}
                   cy={point.y}
-                  r={isSelected ? 12 : 8}
-                  fill={isSelected ? "#3b82f6" : "#10b981"}
-                  stroke="white"
-                  strokeWidth="3"
-                  className="cursor-pointer hover:scale-110 transition-transform"
-                  onClick={() => handlePointClick(point)}
+                  r={Math.min(point.accuracy * 2, 20)}
+                  fill="none"
+                  stroke={point.accuracy <= 10 ? "#10b981" : "#f59e0b"}
+                  strokeWidth="1"
+                  strokeDasharray="3,3"
+                  opacity="0.6"
                 />
-                
-                {/* House number */}
-                <text
-                  x={point.x}
-                  y={point.y + 4}
-                  textAnchor="middle"
-                  fill="white"
-                  fontSize="12"
-                  fontWeight="bold"
-                  className="pointer-events-none"
-                >
-                  {point.index}
-                </text>
-
-                {/* House name label - positioned to avoid overlap */}
-                <text
-                  x={point.x}
-                  y={point.y - 20}
-                  textAnchor="middle"
-                  fill="#374151"
-                  fontSize="10"
-                  fontWeight="600"
-                  className="pointer-events-none"
-                >
-                  {point.name.length > 15 ? point.name.substring(0, 15) + '...' : point.name}
-                </text>
-
-                {/* Accuracy indicator */}
-                <text
-                  x={point.x}
-                  y={point.y + 25}
-                  textAnchor="middle"
-                  fill="#6b7280"
-                  fontSize="8"
-                  className="pointer-events-none"
-                >
-                  {point.accuracy ? `${point.accuracy.toFixed(1)}m` : ''}
-                </text>
-              </g>
-            )
-          })}
-
-          {/* Selected house highlight */}
-          {selectedHouse && (
-            <g>
-              <circle
-                cx={mapData.points.find(p => p.id === selectedHouse.id)?.x}
-                cy={mapData.points.find(p => p.id === selectedHouse.id)?.y}
-                r="20"
-                fill="none"
-                stroke="#3b82f6"
-                strokeWidth="2"
-                opacity="0.3"
-                className="animate-pulse"
-              />
+              )}
             </g>
-          )}
+          ))}
         </svg>
       </div>
 
-      {/* Map Controls */}
-      <div className="absolute top-4 right-4 flex flex-col gap-2">
-        <button 
-          className="p-2 bg-white/90 rounded-lg shadow-lg hover:bg-white transition-colors"
-          title="Network Overview"
-        >
-          <Navigation className="w-4 h-4 text-gray-600" />
-        </button>
-        
-        <button 
-          className="p-2 bg-white/90 rounded-lg shadow-lg hover:bg-white transition-colors"
-          title="Property Details"
-        >
-          <MapPin className="w-4 h-4 text-gray-600" />
-        </button>
-      </div>
-
-      {/* Legend */}
-      <div className="absolute bottom-4 left-4 bg-white/90 rounded-lg p-3 shadow-lg">
-        <div className="flex items-center gap-2 mb-2">
-          <Info className="w-4 h-4 text-gray-600" />
-          <span className="text-sm font-semibold text-gray-700">Property Network</span>
-        </div>
-        <div className="space-y-1 text-xs">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-            <span className="text-gray-600">Property</span>
+      {/* Selected Property Details */}
+      {selectedHouse && (
+        <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg border border-gray-200 p-4 max-w-xs">
+          <div className="flex items-start justify-between mb-3">
+            <h3 className="font-semibold text-gray-900 text-sm">
+              {formatHouseName(selectedHouse.name)}
+            </h3>
+            <button
+              onClick={() => onHouseClick(null)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              ×
+            </button>
           </div>
+          
+          <div className="space-y-2 text-xs">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-3 h-3 text-gray-400" />
+              <span className="text-gray-600">
+                {selectedHouse.latitude.toFixed(6)}, {selectedHouse.longitude.toFixed(6)}
+              </span>
+            </div>
+            
+            {selectedHouse.agent_name && (
+              <div className="flex items-center gap-2">
+                <span className="text-gray-400">Agent:</span>
+                <span className="font-medium">{selectedHouse.agent_name}</span>
+              </div>
+            )}
+            
+            {selectedHouse.caretaker_name && (
+              <div className="flex items-center gap-2">
+                <span className="text-gray-400">Caretaker:</span>
+                <span className="font-medium">{selectedHouse.caretaker_name}</span>
+              </div>
+            )}
+            
+            {selectedHouse.accuracy && (
+              <div className="flex items-center gap-2">
+                <span className="text-gray-400">Accuracy:</span>
+                <span className={`font-medium ${selectedHouse.accuracy <= 10 ? 'text-green-600' : 'text-orange-600'}`}>
+                  {selectedHouse.accuracy.toFixed(1)}m
+                </span>
+              </div>
+            )}
+          </div>
+          
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <button
+              onClick={() => navigateToLocation(selectedHouse)}
+              className="w-full bg-blue-600 text-white text-xs py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <Navigation className="w-3 h-3" />
+              Navigate to Location
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Map Legend */}
+      <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg border border-gray-200 p-3">
+        <div className="text-xs text-gray-600 space-y-1">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-            <span className="text-gray-600">Selected</span>
+            <span>Property Location</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-blue-500 rounded-full opacity-60"></div>
-            <span className="text-gray-600">Connection</span>
+            <div className="w-3 h-3 border border-green-500 rounded-full bg-transparent"></div>
+            <span>High Accuracy (≤10m)</span>
           </div>
-        </div>
-      </div>
-
-      {/* Map Info */}
-      <div className="absolute bottom-4 right-4 bg-white/90 rounded-lg p-2 shadow-lg">
-        <div className="text-xs text-gray-600">
-          <div>Properties: {houses.length}</div>
-          <div>Scale: {mapData.bounds ? `${((mapData.bounds.maxLat - mapData.bounds.minLat) * 111000).toFixed(0)}m` : ''}</div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 border border-orange-500 rounded-full bg-transparent"></div>
+                         <span>Lower Accuracy (&gt;10m)</span>
+          </div>
         </div>
       </div>
     </div>

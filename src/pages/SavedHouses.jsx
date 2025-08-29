@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Home as HomeIcon, Search, Filter, Grid, List, Eye, Edit, Trash2, MapPin, User, Calendar, Phone } from 'lucide-react'
+import { Home as HomeIcon, Search, Filter, Grid, List, Eye, Edit, Trash2, MapPin, User, Calendar, Phone, Navigation } from 'lucide-react'
 import Header from '../components/Header'
 import apiService from '../services/api'
 
@@ -55,6 +55,27 @@ const SavedHouses = ({ user }) => {
     }
   }
 
+  // Navigate to property location
+  const navigateToLocation = (house) => {
+    const { latitude, longitude, name } = house
+    
+    // Check if device supports navigation
+    if (navigator.share) {
+      // Use native sharing on mobile devices
+      navigator.share({
+        title: `Navigate to ${name}`,
+        text: `Navigate to ${name}`,
+        url: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`
+      }).catch(() => {
+        // Fallback to opening in new tab
+        window.open(`https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`, '_blank')
+      })
+    } else {
+      // Fallback for desktop browsers
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`, '_blank')
+    }
+  }
+
   // Filter houses based on search and filter criteria
   const filteredHouses = houses.filter(house => {
     const matchesSearch = house.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -78,6 +99,16 @@ const SavedHouses = ({ user }) => {
       day: 'numeric',
       year: 'numeric'
     })
+  }
+
+  // Format house name to preserve numbers
+  const formatHouseName = (name) => {
+    // If the name is just a number, return it as is
+    if (/^\d+$/.test(name.trim())) {
+      return name.trim()
+    }
+    // Otherwise return the name as entered
+    return name
   }
 
   // Show loading state
@@ -294,13 +325,20 @@ const SavedHouses = ({ user }) => {
                   <div>
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1">{house.name}</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-1">{formatHouseName(house.name)}</h3>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <MapPin className="w-4 h-4" />
                           <span>{house.latitude.toFixed(4)}, {house.longitude.toFixed(4)}</span>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => navigateToLocation(house)}
+                          className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
+                          title="Navigate to location"
+                        >
+                          <Navigation className="w-4 h-4" />
+                        </button>
                         <button
                           className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
                           title="View details"
@@ -355,7 +393,7 @@ const SavedHouses = ({ user }) => {
                   // List View
                   <>
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">{house.name}</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">{formatHouseName(house.name)}</h3>
                       <div className="flex items-center gap-4 text-sm text-gray-600">
                         <span className="flex items-center gap-1">
                           <MapPin className="w-4 h-4" />
@@ -380,6 +418,13 @@ const SavedHouses = ({ user }) => {
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => navigateToLocation(house)}
+                        className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
+                        title="Navigate to location"
+                      >
+                        <Navigation className="w-4 h-4" />
+                      </button>
                       <button
                         className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
                         title="View details"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Home, MapPin, Plus, TrendingUp, Users, Calendar, Search, Filter, Eye, Edit, Trash2, Clock, Map } from 'lucide-react'
+import { Home, MapPin, Plus, TrendingUp, Users, Calendar, Search, Filter, Eye, Edit, Trash2, Clock, Map, Navigation } from 'lucide-react'
 import Header from '../components/Header'
 import SimpleMap from '../components/SimpleMap'
 import apiService from '../services/api'
@@ -50,6 +50,37 @@ const Dashboard = ({ user }) => {
       console.error('Error deleting house:', error)
       alert(`Error deleting house: ${error.message}`)
     }
+  }
+
+  // Navigate to property location
+  const navigateToLocation = (house) => {
+    const { latitude, longitude, name } = house
+    
+    // Check if device supports navigation
+    if (navigator.share) {
+      // Use native sharing on mobile devices
+      navigator.share({
+        title: `Navigate to ${name}`,
+        text: `Navigate to ${name}`,
+        url: `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`
+      }).catch(() => {
+        // Fallback to opening in new tab
+        window.open(`https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`, '_blank')
+      })
+    } else {
+      // Fallback for desktop browsers
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`, '_blank')
+    }
+  }
+
+  // Format house name to preserve numbers
+  const formatHouseName = (name) => {
+    // If the name is just a number, return it as is
+    if (/^\d+$/.test(name.trim())) {
+      return name.trim()
+    }
+    // Otherwise return the name as entered
+    return name
   }
 
   const filteredHouses = houses.filter(house =>
@@ -293,7 +324,7 @@ const Dashboard = ({ user }) => {
                   recentHouses.map((house) => (
                     <div key={house.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900">{house.name}</p>
+                        <p className="font-medium text-gray-900">{formatHouseName(house.name)}</p>
                         <p className="text-sm text-gray-600">
                           {house.agent_name && `Agent: ${house.agent_name}`}
                           {house.caretaker_name && ` • Caretaker: ${house.caretaker_name}`}
@@ -301,6 +332,13 @@ const Dashboard = ({ user }) => {
                         <p className="text-xs text-gray-500">{formatDate(house.created_at)}</p>
                       </div>
                       <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => navigateToLocation(house)}
+                          className="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors"
+                          title="Navigate to location"
+                        >
+                          <Navigation className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => setSelectedHouse(house)}
                           className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
@@ -343,7 +381,7 @@ const Dashboard = ({ user }) => {
                     <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
                     <div className="flex-1">
                       <p className="text-sm text-gray-900">
-                        <span className="font-medium">Property added:</span> {house.name}
+                        <span className="font-medium">Property added:</span> {formatHouseName(house.name)}
                       </p>
                       <p className="text-xs text-gray-500 flex items-center mt-1">
                         <Clock className="w-3 h-3 mr-1" />
