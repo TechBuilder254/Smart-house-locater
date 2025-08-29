@@ -8,7 +8,7 @@ if (!supabaseUrl || !supabaseKey) {
   throw new Error('Missing Supabase environment variables: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseKey);
 
 class SupabaseService {
   constructor() {
@@ -36,7 +36,7 @@ class SupabaseService {
       
       // Search functionality
       if (search) {
-        query = query.or(`name.ilike.%${search}%,agent_name.ilike.%${search}%,notes.ilike.%${search}%`);
+        query = query.or(`name.ilike.%${search}%,caretaker_name.ilike.%${search}%,notes.ilike.%${search}%`);
       }
       
       // Pagination
@@ -68,19 +68,20 @@ class SupabaseService {
   // Create new house
   async createHouse(houseData) {
     try {
-      const { name, agentName, location, notes } = houseData;
+      const { name, location, notes, caretaker_name, caretaker_phone } = houseData;
       
       // Validation
-      if (!name || !agentName || !location || !location.latitude || !location.longitude) {
-        throw new Error('Missing required fields: name, agentName, and location (latitude, longitude)');
+      if (!name || !location || !location.latitude || !location.longitude) {
+        throw new Error('Missing required fields: name and location (latitude, longitude)');
       }
       
       const data = {
         name: name.trim(),
-        agent_name: agentName.trim(),
         latitude: parseFloat(location.latitude),
         longitude: parseFloat(location.longitude),
-        notes: notes ? notes.trim() : ''
+        notes: notes ? notes.trim() : '',
+        caretaker_name: caretaker_name ? caretaker_name.trim() : null,
+        caretaker_phone: caretaker_phone ? caretaker_phone.trim() : null
       };
       
       const { data: house, error } = await this.supabase
