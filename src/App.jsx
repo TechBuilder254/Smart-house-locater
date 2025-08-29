@@ -6,6 +6,8 @@ import SavedHouses from './pages/SavedHouses'
 import AddHousePage from './pages/AddHousePage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
+import ProfileSettings from './pages/ProfileSettings'
+import AccountSettings from './pages/AccountSettings'
 import TermsOfService from './pages/TermsOfService'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import { supabase } from './services/supabase'
@@ -52,12 +54,14 @@ function App() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
-        
+
         {/* Protected Routes */}
         <Route path="/dashboard" element={<Dashboard user={user} />} />
         <Route path="/saved-houses" element={<SavedHouses user={user} />} />
         <Route path="/add-house" element={<AddHousePage user={user} />} />
-        
+        <Route path="/profile-settings" element={<ProfileSettings user={user} />} />
+        <Route path="/account-settings" element={<AccountSettings user={user} />} />
+
         {/* Redirect authenticated users to dashboard */}
         <Route path="*" element={<LandingPage />} />
       </Routes>

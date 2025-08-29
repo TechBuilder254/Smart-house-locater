@@ -4,6 +4,7 @@ import Header from '../components/Header'
 import SimpleMap from '../components/SimpleMap'
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal'
 import apiService from '../services/api'
+import { useNavigate } from 'react-router-dom'
 
 const Dashboard = ({ user }) => {
   const [houses, setHouses] = useState([])
@@ -14,6 +15,7 @@ const Dashboard = ({ user }) => {
   const [searchTerm, setSearchTerm] = useState('')
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, house: null })
   const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const navigate = useNavigate()
 
   // Load houses from Supabase API
   const loadHouses = async () => {
@@ -209,17 +211,30 @@ const Dashboard = ({ user }) => {
             </div>
             
             <div className="space-y-2">
-              <button className="w-full flex items-center space-x-3 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+              <button 
+                onClick={() => {
+                  setShowProfileMenu(false)
+                  navigate('/profile-settings')
+                }}
+                className="w-full flex items-center space-x-3 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+              >
                 <User className="w-4 h-4" />
                 <span>Profile Settings</span>
               </button>
-              <button className="w-full flex items-center space-x-3 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+              <button 
+                onClick={() => {
+                  setShowProfileMenu(false)
+                  navigate('/account-settings')
+                }}
+                className="w-full flex items-center space-x-3 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+              >
                 <Settings className="w-4 h-4" />
                 <span>Account Settings</span>
               </button>
               <div className="border-t border-gray-200 pt-2">
                 <button 
                   onClick={() => {
+                    setShowProfileMenu(false)
                     // Handle sign out
                     window.location.href = '/'
                   }}
