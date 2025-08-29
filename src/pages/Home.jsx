@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { MapPin, Home as HomeIcon, Users, Network, Plus, Search, Filter } from 'lucide-react'
 import TestConnection from '../components/TestConnection'
+import GoogleMap from '../components/GoogleMap'
 import apiService from '../services/api'
 
 const Home = () => {
@@ -187,52 +188,13 @@ const Home = () => {
             </div>
           </div>
 
-          {/* Map Container */}
-          <div className="relative h-96 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl overflow-hidden border-2 border-blue-200">
-            {/* Map Placeholder - In a real app, you'd integrate Google Maps or Mapbox here */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MapPin className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">Interactive Map</h3>
-                <p className="text-gray-500 text-sm mb-4">
-                  {houses.length} properties would be displayed here
-                </p>
-                <div className="grid grid-cols-2 gap-2 max-w-xs mx-auto">
-                  {houses.slice(0, 4).map((house, index) => (
-                    <div
-                      key={house.id}
-                      className={`p-2 rounded-lg text-xs cursor-pointer transition-all ${
-                        selectedHouse?.id === house.id
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-white/80 text-gray-700 hover:bg-blue-100'
-                      }`}
-                      onClick={() => handleHouseClick(house)}
-                    >
-                      <div className="font-semibold truncate">{house.name}</div>
-                      <div className="text-xs opacity-75">{house.agent_name}</div>
-                    </div>
-                  ))}
-                </div>
-                {houses.length > 4 && (
-                  <p className="text-xs text-gray-400 mt-2">
-                    +{houses.length - 4} more properties
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Map Controls */}
-            <div className="absolute top-4 right-4 flex gap-2">
-              <button className="p-2 bg-white/90 rounded-lg shadow-lg hover:bg-white transition-colors">
-                <Search className="w-4 h-4 text-gray-600" />
-              </button>
-              <button className="p-2 bg-white/90 rounded-lg shadow-lg hover:bg-white transition-colors">
-                <Filter className="w-4 h-4 text-gray-600" />
-              </button>
-            </div>
-          </div>
+          {/* Real Google Map */}
+          <GoogleMap 
+            houses={houses}
+            selectedHouse={selectedHouse}
+            onHouseClick={handleHouseClick}
+            center={mapCenter}
+          />
 
           {/* Selected House Info */}
           {selectedHouse && (
